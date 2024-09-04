@@ -78,10 +78,36 @@ const FlappyKite = () => {
     ctx.beginPath();
     ctx.moveTo(x, y);
     
-    stringPointsRef.current.forEach(point => {
+    // Draw string
+    stringPointsRef.current.forEach((point) => {
       ctx.lineTo(x + point.x, y + point.y);
     });
     ctx.stroke();
+
+    // Draw bows/tails
+    stringPointsRef.current.forEach((point, index) => {
+      // Add bows/tails at every 4th point
+      if (index % 4 === 0 && index !== 0) {
+        const bowSize = 8 - (index / 4); // Decreasing size for farther bows
+        const bowColor = index % 8 === 0 ? '#FF6B6B' : '#4ECDC4'; // Alternating colors
+        
+        ctx.save();
+        ctx.translate(x + point.x, y + point.y);
+        ctx.rotate(Math.atan2(point.y - stringPointsRef.current[index-1].y, point.x - stringPointsRef.current[index-1].x));
+        
+        // Draw bow/tail
+        ctx.fillStyle = bowColor;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(-bowSize, -bowSize/2);
+        ctx.lineTo(-bowSize*1.5, 0);
+        ctx.lineTo(-bowSize, bowSize/2);
+        ctx.closePath();
+        ctx.fill();
+        
+        ctx.restore();
+      }
+    });
 
     // Draw kite body
     ctx.save();
