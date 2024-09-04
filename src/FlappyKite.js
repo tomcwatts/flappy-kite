@@ -45,9 +45,9 @@ const FlappyKite = () => {
     }));
     stringPointsRef.current = Array(STRING_SEGMENTS).fill().map((_, i) => ({ 
       x: -i * SEGMENT_LENGTH, 
-      y: i * SEGMENT_LENGTH * 0.4,
+      y: i * SEGMENT_LENGTH * 0.45,
       oldX: -i * SEGMENT_LENGTH, 
-      oldY: i * SEGMENT_LENGTH * 0.4 
+      oldY: i * SEGMENT_LENGTH * 0.45 
     }));
     forceUpdate({});
   }, []);
@@ -71,7 +71,7 @@ const FlappyKite = () => {
     const { x, y, rotation } = kiteRef.current;
     
     // Draw kite string first (behind the kite)
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.strokeStyle = '#F5F4FF';
     ctx.lineWidth = 3;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
@@ -89,7 +89,7 @@ const FlappyKite = () => {
       // Add bows/tails at every 4th point
       if (index % 4 === 0 && index !== 0) {
         const bowSize = 8 - (index / 4); // Decreasing size for farther bows
-        const bowColor = index % 8 === 0 ? '#FF6B6B' : '#4ECDC4'; // Alternating colors
+        const bowColor = '#30f2a2'; // Purple color for all bows/tails
         
         ctx.save();
         ctx.translate(x + point.x, y + point.y);
@@ -115,7 +115,7 @@ const FlappyKite = () => {
     ctx.rotate((rotation + 45) * Math.PI / 180);
     
     // Main kite body
-    ctx.fillStyle = '#4CAF50'; // Green color
+    ctx.fillStyle = '#30f2a2';
     ctx.beginPath();
     ctx.moveTo(30, -20);  // Top point
     ctx.lineTo(-5, -15);  // Left point
@@ -125,7 +125,7 @@ const FlappyKite = () => {
     ctx.fill();
 
     // Kite details
-    ctx.strokeStyle = 'white';
+    ctx.strokeStyle = '#14cc80';
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(30, -20);
@@ -135,7 +135,7 @@ const FlappyKite = () => {
     ctx.stroke();
 
     // Kite bow tie
-    ctx.fillStyle = '#FFA500'; // Orange color for the bow
+    ctx.fillStyle = '#14cc80';
     ctx.beginPath();
     ctx.arc(0, 0, 4, 0, Math.PI * 2);
     ctx.fill();
@@ -152,7 +152,7 @@ const FlappyKite = () => {
     ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
     // Hills
-    ctx.fillStyle = '#228B22';
+    ctx.fillStyle = '#14cc80';
     ctx.beginPath();
     ctx.moveTo(0, CANVAS_HEIGHT);
     for (let i = 0; i <= CANVAS_WIDTH; i += 50) {
@@ -173,13 +173,13 @@ const FlappyKite = () => {
   }, []);
 
   const drawPipes = useCallback((ctx) => {
-    ctx.fillStyle = '#4CAF50';
+    ctx.fillStyle = '#800080';
     pipesRef.current.forEach(pipe => {
       ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.gapStart);
       ctx.fillRect(pipe.x, pipe.gapStart + PIPE_GAP, PIPE_WIDTH, CANVAS_HEIGHT - pipe.gapStart - PIPE_GAP);
       
       // Pipe cap
-      ctx.fillStyle = '#45a049';
+      ctx.fillStyle = '#6a006a';
       ctx.fillRect(pipe.x - 5, pipe.gapStart - 20, PIPE_WIDTH + 10, 20);
       ctx.fillRect(pipe.x - 5, pipe.gapStart + PIPE_GAP, PIPE_WIDTH + 10, 20);
     });
@@ -285,9 +285,9 @@ const FlappyKite = () => {
         kiteRef.current.velocity += GRAVITY;
 
         // Update kite rotation (increased angle deviation)
-        const targetRotation = kiteRef.current.velocity * 4; // Increased from 2 to 4
-        kiteRef.current.rotation += (targetRotation - kiteRef.current.rotation) * 0.2; // Increased from 0.1 to 0.2
-        kiteRef.current.rotation = Math.max(-45, Math.min(45, kiteRef.current.rotation)); // Changed limits from -30/90 to -45/45
+        const targetRotation = kiteRef.current.velocity * 4;
+        kiteRef.current.rotation += (targetRotation - kiteRef.current.rotation) * 0.2;
+        kiteRef.current.rotation = Math.max(-45, Math.min(45, kiteRef.current.rotation));
 
         // Update string physics
         updateStringPhysics();
