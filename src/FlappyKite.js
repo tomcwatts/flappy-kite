@@ -2,13 +2,13 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 
 const CANVAS_WIDTH = 800;
 const CANVAS_HEIGHT = 600;
-const GRAVITY = 0.2; // Reduced from 0.4 to 0.2
-const JUMP_STRENGTH = -6; // Reduced from -8 to -6
+const GRAVITY = 0.15;
+const JUMP_STRENGTH = -5;
 const PIPE_WIDTH = 80;
-const PIPE_GAP = 180;
-const PIPE_SPEED = 2;
-const STRING_SEGMENTS = 12; // Increased from 10 to 12
-const SEGMENT_LENGTH = 3.5; // Increased from 3 to 3.5
+const PIPE_GAP = 200;
+const PIPE_SPEED = 1.5;
+const STRING_SEGMENTS = 15;
+const SEGMENT_LENGTH = 4;
 
 const FlappyKite = () => {
   const canvasRef = useRef(null);
@@ -45,9 +45,9 @@ const FlappyKite = () => {
     }));
     stringPointsRef.current = Array(STRING_SEGMENTS).fill().map((_, i) => ({ 
       x: -i * SEGMENT_LENGTH, 
-      y: i * SEGMENT_LENGTH * 0.45, // Slightly reduced from 0.5 to 0.45 for less initial downward angle
+      y: i * SEGMENT_LENGTH * 0.4,
       oldX: -i * SEGMENT_LENGTH, 
-      oldY: i * SEGMENT_LENGTH * 0.45 
+      oldY: i * SEGMENT_LENGTH * 0.4 
     }));
     forceUpdate({});
   }, []);
@@ -61,8 +61,8 @@ const FlappyKite = () => {
     }
 
     return pipes.some(pipe => {
-      const inXRange = kite.x + 15 > pipe.x && kite.x - 15 < pipe.x + PIPE_WIDTH;
-      const inYRange = kite.y - 15 < pipe.gapStart || kite.y + 15 > pipe.gapStart + PIPE_GAP;
+      const inXRange = kite.x + 30 > pipe.x && kite.x - 40 < pipe.x + PIPE_WIDTH;
+      const inYRange = kite.y - 30 < pipe.gapStart || kite.y + 30 > pipe.gapStart + PIPE_GAP;
       return inXRange && inYRange;
     });
   }, []);
@@ -71,8 +71,8 @@ const FlappyKite = () => {
     const { x, y, rotation } = kiteRef.current;
     
     // Draw kite string first (behind the kite)
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)'; // Slightly increased opacity
-    ctx.lineWidth = 3; // Increased from 2 to 3
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.lineWidth = 3;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.beginPath();
@@ -86,27 +86,33 @@ const FlappyKite = () => {
     // Draw kite body
     ctx.save();
     ctx.translate(x, y);
-    ctx.rotate(rotation * Math.PI / 180);
+    ctx.rotate((rotation + 45) * Math.PI / 180);
     
-    // Draw kite body
-    ctx.fillStyle = 'red';
+    // Main kite body
+    ctx.fillStyle = '#4CAF50'; // Green color
     ctx.beginPath();
-    ctx.moveTo(0, -20);
-    ctx.lineTo(20, 0);
-    ctx.lineTo(0, 20);
-    ctx.lineTo(-20, 0);
+    ctx.moveTo(30, -20);  // Top point
+    ctx.lineTo(-5, -15);  // Left point
+    ctx.lineTo(-30, 20);  // Bottom point
+    ctx.lineTo(5, 15);    // Right point
     ctx.closePath();
     ctx.fill();
 
-    // Draw kite details
+    // Kite details
     ctx.strokeStyle = 'white';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(0, -20);
-    ctx.lineTo(0, 20);
-    ctx.moveTo(-20, 0);
-    ctx.lineTo(20, 0);
+    ctx.moveTo(30, -20);
+    ctx.lineTo(-30, 20);
+    ctx.moveTo(-5, -15);
+    ctx.lineTo(5, 15);
     ctx.stroke();
+
+    // Kite bow tie
+    ctx.fillStyle = '#FFA500'; // Orange color for the bow
+    ctx.beginPath();
+    ctx.arc(0, 0, 4, 0, Math.PI * 2);
+    ctx.fill();
 
     ctx.restore();
   }, []);
@@ -163,50 +169,50 @@ const FlappyKite = () => {
     // Apply forces
     for (let i = 0; i < points.length; i++) {
       const point = points[i];
-      const vx = (point.x - point.oldX) * 0.98; // Reduced from 0.99 to 0.98
-      const vy = (point.y - point.oldY) * 0.98; // Reduced from 0.99 to 0.98
+      const vx = (point.x - point.oldX) * 0.98;
+      const vy = (point.y - point.oldY) * 0.98;
 
       point.oldX = point.x;
       point.oldY = point.y;
 
       // Adjust position based on kite movement
       point.x += kiteMovement;
-      point.y += kiteVelocity * 0.03; // Reduced from 0.05 to 0.03
+      point.y += kiteVelocity * 0.03;
 
       point.x += vx;
-      point.y += vy + 0.25; // Increased gravity from 0.15 to 0.25
+      point.y += vy + 0.25;
 
       // Backward force
       const backwardForce = 0.9 + (Math.abs(kiteVelocity) * 0.04);
       point.x -= backwardForce * (i / points.length);
 
       // Slightly increase downward angle
-      point.y += i * 0.025; // Decreased from 0.03 to 0.025
+      point.y += i * 0.025;
 
-      // Dynamic wave effect (reduced amplitude)
-      const waveAmplitude = 0.15 * (i / points.length);
+      // Dynamic wave effect
+      const waveAmplitude = 0.25 * (i / points.length);
       const waveFrequencyX = 0.8;
       const waveFrequencyY = 0.6;
       const phaseShift = i * 0.2;
       point.x += Math.sin(time * waveFrequencyX + phaseShift) * waveAmplitude;
-      point.y += Math.cos(time * waveFrequencyY + phaseShift) * waveAmplitude * 0.3;
+      point.y += Math.cos(time * waveFrequencyY + phaseShift) * waveAmplitude * 0.4;
 
-      // Add some noise for more natural movement (reduced)
+      // Add some noise for more natural movement
       point.x += (Math.random() - 0.5) * 0.1;
       point.y += (Math.random() - 0.5) * 0.1;
 
-      // Wind effect (slightly reduced)
+      // Wind effect
       point.x += windEffect * (i / points.length) * 0.02;
       point.y += windEffect * (i / points.length) * 0.015;
 
       // Limit upward movement
-      point.y = Math.max(point.y, -i * 0.3); // Reduced from 0.5 to 0.3
+      point.y = Math.max(point.y, -i * 0.5);
 
       // Limit forward movement
       point.x = Math.min(point.x, 0);
     }
 
-    // Constrain string length (increased iterations)
+    // Constrain string length
     for (let i = 0; i < 5; i++) {
       constrainPoints();
     }
@@ -226,8 +232,8 @@ const FlappyKite = () => {
       const distance = Math.sqrt(dx * dx + dy * dy);
       const difference = SEGMENT_LENGTH - distance;
       const percent = difference / distance / 2;
-      const offsetX = dx * percent * 0.5; // Increased from 0.3 to 0.5
-      const offsetY = dy * percent * 0.5; // Increased from 0.3 to 0.5
+      const offsetX = dx * percent * 0.5;
+      const offsetY = dy * percent * 0.5;
 
       if (i > 0) {
         p1.x -= offsetX;
@@ -252,10 +258,10 @@ const FlappyKite = () => {
         kiteRef.current.y += kiteRef.current.velocity;
         kiteRef.current.velocity += GRAVITY;
 
-        // Update kite rotation
-        const targetRotation = kiteRef.current.velocity * 2;
-        kiteRef.current.rotation += (targetRotation - kiteRef.current.rotation) * 0.1;
-        kiteRef.current.rotation = Math.max(-30, Math.min(90, kiteRef.current.rotation));
+        // Update kite rotation (increased angle deviation)
+        const targetRotation = kiteRef.current.velocity * 4; // Increased from 2 to 4
+        kiteRef.current.rotation += (targetRotation - kiteRef.current.rotation) * 0.2; // Increased from 0.1 to 0.2
+        kiteRef.current.rotation = Math.max(-45, Math.min(45, kiteRef.current.rotation)); // Changed limits from -30/90 to -45/45
 
         // Update string physics
         updateStringPhysics();
@@ -267,7 +273,7 @@ const FlappyKite = () => {
           .map(pipe => ({ ...pipe, x: pipe.x - PIPE_SPEED }))
           .filter(pipe => pipe.x + PIPE_WIDTH > 0);
 
-        if (pipesRef.current.length === 0 || pipesRef.current[pipesRef.current.length - 1].x < CANVAS_WIDTH - 300) {
+        if (pipesRef.current.length === 0 || pipesRef.current[pipesRef.current.length - 1].x < CANVAS_WIDTH - 350) {
           const gapStart = Math.random() * (CANVAS_HEIGHT - PIPE_GAP - 200) + 100;
           pipesRef.current.push({ x: CANVAS_WIDTH, gapStart });
         }
