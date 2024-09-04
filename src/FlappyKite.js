@@ -7,8 +7,8 @@ const JUMP_STRENGTH = -6; // Reduced from -8 to -6
 const PIPE_WIDTH = 80;
 const PIPE_GAP = 180;
 const PIPE_SPEED = 2;
-const STRING_SEGMENTS = 20;
-const SEGMENT_LENGTH = 5;
+const STRING_SEGMENTS = 12; // Increased from 10 to 12
+const SEGMENT_LENGTH = 3.5; // Increased from 3 to 3.5
 
 const FlappyKite = () => {
   const canvasRef = useRef(null);
@@ -45,9 +45,9 @@ const FlappyKite = () => {
     }));
     stringPointsRef.current = Array(STRING_SEGMENTS).fill().map((_, i) => ({ 
       x: -i * SEGMENT_LENGTH, 
-      y: i * SEGMENT_LENGTH * 0.5, 
+      y: i * SEGMENT_LENGTH * 0.45, // Slightly reduced from 0.5 to 0.45 for less initial downward angle
       oldX: -i * SEGMENT_LENGTH, 
-      oldY: i * SEGMENT_LENGTH * 0.5 
+      oldY: i * SEGMENT_LENGTH * 0.45 
     }));
     forceUpdate({});
   }, []);
@@ -71,8 +71,8 @@ const FlappyKite = () => {
     const { x, y, rotation } = kiteRef.current;
     
     // Draw kite string first (behind the kite)
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)'; // Slightly increased opacity
+    ctx.lineWidth = 3; // Increased from 2 to 3
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
     ctx.beginPath();
@@ -156,46 +156,58 @@ const FlappyKite = () => {
   const updateStringPhysics = useCallback(() => {
     const points = stringPointsRef.current;
     const time = Date.now() * 0.001;
-    const windEffect = Math.sin(time) * 1.5;
+    const windEffect = Math.sin(time * 0.5) * 3 + Math.cos(time * 0.7) * 2;
     const kiteVelocity = kiteRef.current.velocity;
     const kiteMovement = kiteRef.current.x - prevKitePositionRef.current.x;
 
     // Apply forces
     for (let i = 0; i < points.length; i++) {
       const point = points[i];
-      const vx = point.x - point.oldX;
-      const vy = point.y - point.oldY;
+      const vx = (point.x - point.oldX) * 0.98; // Reduced from 0.99 to 0.98
+      const vy = (point.y - point.oldY) * 0.98; // Reduced from 0.99 to 0.98
 
       point.oldX = point.x;
       point.oldY = point.y;
 
-      // Adjust x-position based on kite movement
+      // Adjust position based on kite movement
       point.x += kiteMovement;
+      point.y += kiteVelocity * 0.03; // Reduced from 0.05 to 0.03
 
-      point.x += vx * 0.95;
-      point.y += vy * 0.95 + 0.15; // Slightly reduced gravity effect
+      point.x += vx;
+      point.y += vy + 0.25; // Increased gravity from 0.15 to 0.25
 
       // Backward force
-      point.x -= 1.0 + (Math.abs(kiteVelocity) * 0.1);
+      const backwardForce = 0.9 + (Math.abs(kiteVelocity) * 0.04);
+      point.x -= backwardForce * (i / points.length);
 
-      // Reduced downward angle
-      point.y += i * 0.08; // Decreased from 0.15 to 0.08
+      // Slightly increase downward angle
+      point.y += i * 0.025; // Decreased from 0.03 to 0.025
 
-      // Limit forward and upward movement
+      // Dynamic wave effect (reduced amplitude)
+      const waveAmplitude = 0.15 * (i / points.length);
+      const waveFrequencyX = 0.8;
+      const waveFrequencyY = 0.6;
+      const phaseShift = i * 0.2;
+      point.x += Math.sin(time * waveFrequencyX + phaseShift) * waveAmplitude;
+      point.y += Math.cos(time * waveFrequencyY + phaseShift) * waveAmplitude * 0.3;
+
+      // Add some noise for more natural movement (reduced)
+      point.x += (Math.random() - 0.5) * 0.1;
+      point.y += (Math.random() - 0.5) * 0.1;
+
+      // Wind effect (slightly reduced)
+      point.x += windEffect * (i / points.length) * 0.02;
+      point.y += windEffect * (i / points.length) * 0.015;
+
+      // Limit upward movement
+      point.y = Math.max(point.y, -i * 0.3); // Reduced from 0.5 to 0.3
+
+      // Limit forward movement
       point.x = Math.min(point.x, 0);
-      point.y = Math.max(point.y, i * 0.3); // Reduced from 0.5 to 0.3
-
-      // Add subtle wave effect
-      const waveAmplitude = 0.25 * (i / points.length);
-      const waveFrequency = 1.5;
-      point.x += Math.sin(time * waveFrequency + i * 0.3) * waveAmplitude;
-      point.y += Math.cos(time * waveFrequency + i * 0.3) * waveAmplitude;
-
-      point.x += windEffect * (i * 0.03);
     }
 
-    // Constrain string length
-    for (let i = 0; i < 10; i++) {
+    // Constrain string length (increased iterations)
+    for (let i = 0; i < 5; i++) {
       constrainPoints();
     }
 
@@ -214,8 +226,8 @@ const FlappyKite = () => {
       const distance = Math.sqrt(dx * dx + dy * dy);
       const difference = SEGMENT_LENGTH - distance;
       const percent = difference / distance / 2;
-      const offsetX = dx * percent * 0.7;
-      const offsetY = dy * percent * 0.7;
+      const offsetX = dx * percent * 0.5; // Increased from 0.3 to 0.5
+      const offsetY = dy * percent * 0.5; // Increased from 0.3 to 0.5
 
       if (i > 0) {
         p1.x -= offsetX;
