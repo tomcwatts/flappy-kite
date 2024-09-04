@@ -155,7 +155,8 @@ const FlappyKite = () => {
 
   const updateStringPhysics = useCallback(() => {
     const points = stringPointsRef.current;
-    const windEffect = Math.sin(Date.now() * 0.001) * 2;
+    const time = Date.now() * 0.001;
+    const windEffect = Math.sin(time) * 1.5;
     const kiteVelocity = kiteRef.current.velocity;
     const kiteMovement = kiteRef.current.x - prevKitePositionRef.current.x;
 
@@ -171,20 +172,30 @@ const FlappyKite = () => {
       // Adjust x-position based on kite movement
       point.x += kiteMovement;
 
-      point.x += vx * 0.95; // Reduced horizontal momentum
-      point.y += vy * 0.98 + 0.1; // gravity
+      point.x += vx * 0.95;
+      point.y += vy * 0.95 + 0.15; // Slightly reduced gravity effect
 
-      // Stronger backward force
-      point.x -= 1.5 + (Math.abs(kiteVelocity) * 0.2);
+      // Backward force
+      point.x -= 1.0 + (Math.abs(kiteVelocity) * 0.1);
 
-      // Limit forward movement
+      // Reduced downward angle
+      point.y += i * 0.08; // Decreased from 0.15 to 0.08
+
+      // Limit forward and upward movement
       point.x = Math.min(point.x, 0);
+      point.y = Math.max(point.y, i * 0.3); // Reduced from 0.5 to 0.3
 
-      point.x += windEffect * (i * 0.03); // Reduced wind effect
+      // Add subtle wave effect
+      const waveAmplitude = 0.25 * (i / points.length);
+      const waveFrequency = 1.5;
+      point.x += Math.sin(time * waveFrequency + i * 0.3) * waveAmplitude;
+      point.y += Math.cos(time * waveFrequency + i * 0.3) * waveAmplitude;
+
+      point.x += windEffect * (i * 0.03);
     }
 
     // Constrain string length
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 10; i++) {
       constrainPoints();
     }
 
@@ -203,8 +214,8 @@ const FlappyKite = () => {
       const distance = Math.sqrt(dx * dx + dy * dy);
       const difference = SEGMENT_LENGTH - distance;
       const percent = difference / distance / 2;
-      const offsetX = dx * percent;
-      const offsetY = dy * percent;
+      const offsetX = dx * percent * 0.7;
+      const offsetY = dy * percent * 0.7;
 
       if (i > 0) {
         p1.x -= offsetX;
