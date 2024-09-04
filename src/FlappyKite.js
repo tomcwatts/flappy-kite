@@ -89,7 +89,7 @@ const FlappyKite = () => {
       // Add bows/tails at every 4th point
       if (index % 4 === 0 && index !== 0) {
         const bowSize = 8 - (index / 4); // Decreasing size for farther bows
-        const bowColor = '#30f2a2'; // Purple color for all bows/tails
+        const bowColor = '#14cc80'; // Purple color for all bows/tails
         
         ctx.save();
         ctx.translate(x + point.x, y + point.y);
@@ -173,13 +173,24 @@ const FlappyKite = () => {
   }, []);
 
   const drawPipes = useCallback((ctx) => {
-    ctx.fillStyle = '#800080';
     pipesRef.current.forEach(pipe => {
+      // Determine pipe color based on its position and passed status
+      let pipeColor;
+      if (pipe.passed) {
+        pipeColor = '#30f2a2'; // Green if passed
+      } else {
+        pipeColor = '#FFA500'; // Orange if 10% into the viewport
+      }
+
+      // Draw main pipe body
+      ctx.fillStyle = pipeColor;
       ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.gapStart);
       ctx.fillRect(pipe.x, pipe.gapStart + PIPE_GAP, PIPE_WIDTH, CANVAS_HEIGHT - pipe.gapStart - PIPE_GAP);
       
-      // Pipe cap
-      ctx.fillStyle = '#6a006a';
+      // Pipe cap (slightly darker shade)
+      ctx.fillStyle = pipeColor === '#30f2a2' ? '#14cc80' : 
+                      pipeColor === '#FFA500' ? '#FF8C00' : 
+                      '#606060';
       ctx.fillRect(pipe.x - 5, pipe.gapStart - 20, PIPE_WIDTH + 10, 20);
       ctx.fillRect(pipe.x - 5, pipe.gapStart + PIPE_GAP, PIPE_WIDTH + 10, 20);
     });
@@ -301,7 +312,7 @@ const FlappyKite = () => {
 
         if (pipesRef.current.length === 0 || pipesRef.current[pipesRef.current.length - 1].x < CANVAS_WIDTH - 350) {
           const gapStart = Math.random() * (CANVAS_HEIGHT - PIPE_GAP - 200) + 100;
-          pipesRef.current.push({ x: CANVAS_WIDTH, gapStart });
+          pipesRef.current.push({ x: CANVAS_WIDTH, gapStart, passed: false });
         }
 
         // Update clouds
