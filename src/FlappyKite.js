@@ -70,8 +70,18 @@ const FlappyKite = () => {
   const drawKite = useCallback((ctx) => {
     const { x, y, rotation } = kiteRef.current;
     
+    // Draw string connecting bows/tails
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)'; // Semi-transparent white
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    stringPointsRef.current.forEach((point) => {
+      ctx.lineTo(x + point.x, y + point.y);
+    });
+    ctx.stroke();
+
     // Draw bows/tails
-    const bowColors = ['#4B19D5', '#4B19D5', '#4B19D5', '#4B19D5'];
+    const bowColors = ['#ffffff', '#ffffff', '#ffffff', '#ffffff'];
     stringPointsRef.current.forEach((point, index) => {
       if (index % 4 === 0 && index !== 0) {
         const bowSize = 6 - (index / 4);
@@ -81,7 +91,7 @@ const FlappyKite = () => {
         ctx.translate(x + point.x, y + point.y);
         ctx.rotate(Math.atan2(point.y - stringPointsRef.current[index-1].y, point.x - stringPointsRef.current[index-1].x));
         
-        ctx.fillStyle = '#4B19D5';
+        ctx.fillStyle = '#23d58c';
         ctx.fillRect(-bowSize, -bowSize/2, bowSize*1.5, bowSize);
         
         ctx.restore();
@@ -114,7 +124,7 @@ const FlappyKite = () => {
     ctx.stroke();
 
     // Kite bow tie (changed to green)
-    ctx.fillStyle = '#14cc80';  // Changed from '#FF69B4' to a green color
+    ctx.fillStyle = '#14cc80';
     ctx.fillRect(-4, -4, 8, 8);
 
     ctx.restore();
@@ -129,12 +139,17 @@ const FlappyKite = () => {
     ctx.fillStyle = '#FFD700';
     ctx.fillRect(CANVAS_WIDTH - 120, 80, 40, 40);
 
-    // Hills (pixelated)
+    // Smooth hills
     ctx.fillStyle = '#14cc80';
-    for (let x = 0; x < CANVAS_WIDTH; x += 10) {
+    ctx.beginPath();
+    ctx.moveTo(0, CANVAS_HEIGHT);
+    for (let x = 0; x <= CANVAS_WIDTH; x++) {
       const height = Math.sin(x * 0.02 + backgroundOffsetRef.current) * 40 + 60;
-      ctx.fillRect(x, CANVAS_HEIGHT - height, 10, height);
+      ctx.lineTo(x, CANVAS_HEIGHT - height);
     }
+    ctx.lineTo(CANVAS_WIDTH, CANVAS_HEIGHT);
+    ctx.closePath();
+    ctx.fill();
 
     // Clouds (pixelated)
     ctx.fillStyle = '#FFFFFF';
