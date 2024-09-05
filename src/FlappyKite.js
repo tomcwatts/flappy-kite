@@ -16,10 +16,12 @@ const FlappyKite = () => {
   const SUN_COLOR = '#FFD700';
   const HILL_COLOR = '#00B368';
   const CLOUD_COLOR = '#FFFFFF';
+  const KITE_LIGHT_GREEN = '#4B19D5';
+  const KITE_DARK_GREEN = '#4B19D5';
   const KITE_BODY_COLOR = '#14CC80';
-  const KITE_DETAIL_COLOR = '#00BB64';
+  const KITE_DETAIL_COLOR = '#A195EF';
   const KITE_STRING_COLOR = 'rgba(255, 255, 255, 0.6)';
-  const KITE_BOW_COLOR = '#23d58c';
+  const KITE_BOW_COLOR = '#4B19D5';
   const PIPE_COLOR = '#F83F23';
   const PIPE_PASSED_COLOR = '#00BE13';
   const GAME_SCREEN_BLUE = '#4B19D5';
@@ -91,8 +93,14 @@ const FlappyKite = () => {
       return { x: kite.x + rotatedX, y: kite.y + rotatedY };
     });
 
-    // Check collision with pipes
+    // Check collision with pipes and update passed status
     return pipes.some(pipe => {
+      // Update passed status when the front of the kite aligns with the start of the pipe
+      if (!pipe.passed && kite.x >= pipe.x) {
+        pipe.passed = true;
+        scoreRef.current += 1;
+      }
+
       // Check if any corner is inside the pipe
       return rotatedCorners.some(corner => {
         const inXRange = corner.x > pipe.x && corner.x < pipe.x + PIPE_WIDTH;
@@ -136,29 +144,55 @@ const FlappyKite = () => {
     ctx.translate(x, y);
     ctx.rotate((rotation + 45) * Math.PI / 180);
 
-    // Main kite body
-    ctx.fillStyle = KITE_BODY_COLOR;
+    // Main kite body with different colored quadrants
     ctx.beginPath();
-    ctx.moveTo(30, -20);
-    ctx.lineTo(-5, -15);
-    ctx.lineTo(-30, 20);
-    ctx.lineTo(5, 15);
+    ctx.moveTo(0, 0);
+    ctx.lineTo(30, -20);
+    ctx.lineTo(0, -15);
     ctx.closePath();
+    ctx.fillStyle = KITE_LIGHT_GREEN;
     ctx.fill();
 
-    // Kite details
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(0, -15);
+    ctx.lineTo(-30, 20);
+    ctx.closePath();
+    ctx.fillStyle = KITE_DARK_GREEN;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(-30, 20);
+    ctx.lineTo(0, 15);
+    ctx.closePath();
+    ctx.fillStyle = KITE_LIGHT_GREEN;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(0, 15);
+    ctx.lineTo(30, -20);
+    ctx.closePath();
+    ctx.fillStyle = KITE_DARK_GREEN;
+    ctx.fill();
+
+    // Kite outline
     ctx.strokeStyle = KITE_DETAIL_COLOR;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(30, -20);
     ctx.lineTo(-30, 20);
-    ctx.moveTo(-5, -15);
-    ctx.lineTo(5, 15);
+    ctx.lineTo(30, -20);
+    ctx.moveTo(0, -15);
+    ctx.lineTo(0, 15);
     ctx.stroke();
 
-    // Kite bow tie
-    ctx.fillStyle = KITE_DETAIL_COLOR;
-    ctx.fillRect(-4, -4, 8, 8);
+    // Kite center
+    ctx.fillStyle = '#14e984';
+    ctx.beginPath();
+    ctx.arc(0, 0, 4, 0, Math.PI * 2);
+    ctx.fill();
 
     ctx.restore();
   }, []);
@@ -330,10 +364,10 @@ const FlappyKite = () => {
     // Game title (yellow with "shadow")
     ctx.fillStyle = '#000000';
     ctx.font = 'bold 62px "Press Start 2P", cursive';
-    ctx.fillText('BUILD FLIGHT', CANVAS_WIDTH / 2 + 4, boxY + 104);
+    ctx.fillText('KITEY FLIGHT', CANVAS_WIDTH / 2 + 4, boxY + 104);
     ctx.fillStyle = GAME_SCREEN_TEXT_COLOR;
     ctx.font = 'bold 60px "Press Start 2P", cursive';
-    ctx.fillText('BUILD FLIGHT', CANVAS_WIDTH / 2, boxY + 100);
+    ctx.fillText('KITEY FLIGHT', CANVAS_WIDTH / 2, boxY + 100);
 
     // Other text (white)
     ctx.fillStyle = '#FFFFFF';
@@ -361,13 +395,13 @@ const FlappyKite = () => {
     // Left kite
     ctx.save();
     ctx.translate(boxX + 100, boxY + 320 + yOffset);
-    // drawRetroKite(ctx, 0, 0, 20);
+    drawRetroKite(ctx, 0, 0, 20);
     ctx.restore();
 
     // Right kite
     ctx.save();
     ctx.translate(boxX + boxWidth - 100, boxY + 320 + yOffset);
-    // drawRetroKite(ctx, 0, 0, 20);
+    drawRetroKite(ctx, 0, 0, 20);
     ctx.restore();
   }, []);
 
@@ -445,13 +479,6 @@ const FlappyKite = () => {
       if (checkCollisions()) {
         gameStateRef.current = 'gameOver';
         highScoreRef.current = Math.max(highScoreRef.current, scoreRef.current);
-      }
-
-      // Update score
-      const passedPipe = pipesRef.current.find(pipe => pipe.x + PIPE_WIDTH < kiteRef.current.x && !pipe.passed);
-      if (passedPipe) {
-        scoreRef.current += 1;
-        passedPipe.passed = true;
       }
     }
 
