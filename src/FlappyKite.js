@@ -12,9 +12,9 @@ const SEGMENT_LENGTH = 4;
 
 const FlappyKite = () => {
   // Color variables
-  const SKY_COLOR = '#87CEEB';
+  const SKY_COLOR = '#7FDBFF';
   const SUN_COLOR = '#FFD700';
-  const HILL_COLOR = '#00BB64';
+  const HILL_COLOR = '#00B368';
   const CLOUD_COLOR = '#FFFFFF';
   const KITE_BODY_COLOR = '#14CC80';
   const KITE_DETAIL_COLOR = '#00BB64';
@@ -354,13 +354,20 @@ const FlappyKite = () => {
       ctx.fillText('TO PLAY AGAIN', CANVAS_WIDTH / 2, boxY + 350);
     }
 
-    // Animate the kite icon with a simple up-down motion
+    // Animate the kite icons with a simple up-down motion
     const time = Date.now() / 300;
     const yOffset = Math.sin(time) * 10;
     
+    // Left kite
     ctx.save();
-    ctx.translate(CANVAS_WIDTH / 2, boxY + 50 + yOffset);
-    drawRetroKite(ctx, 0, 0, 30);
+    ctx.translate(boxX + 100, boxY + 320 + yOffset);
+    // drawRetroKite(ctx, 0, 0, 20);
+    ctx.restore();
+
+    // Right kite
+    ctx.save();
+    ctx.translate(boxX + boxWidth - 100, boxY + 320 + yOffset);
+    // drawRetroKite(ctx, 0, 0, 20);
     ctx.restore();
   }, []);
 
