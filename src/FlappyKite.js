@@ -70,23 +70,8 @@ const FlappyKite = () => {
   const drawKite = useCallback((ctx) => {
     const { x, y, rotation } = kiteRef.current;
     
-    // Draw kite string with a slight curve
-    ctx.strokeStyle = '#F5F4FF';
-    ctx.lineWidth = 2;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    
-    const controlPoint1 = { x: x - 50, y: y + 50 };
-    const controlPoint2 = { x: x - 100, y: y + 150 };
-    const endPoint = { x: x - 150, y: y + 200 };
-    
-    ctx.bezierCurveTo(controlPoint1.x, controlPoint1.y, controlPoint2.x, controlPoint2.y, endPoint.x, endPoint.y);
-    ctx.stroke();
-
     // Draw bows/tails
-    const bowColors = ['#FF69B4', '#FFD700', '#00CED1', '#FF6347'];
+    const bowColors = ['#4B19D5', '#4B19D5', '#4B19D5', '#4B19D5'];
     stringPointsRef.current.forEach((point, index) => {
       if (index % 4 === 0 && index !== 0) {
         const bowSize = 6 - (index / 4);
@@ -96,34 +81,20 @@ const FlappyKite = () => {
         ctx.translate(x + point.x, y + point.y);
         ctx.rotate(Math.atan2(point.y - stringPointsRef.current[index-1].y, point.x - stringPointsRef.current[index-1].x));
         
-        ctx.fillStyle = bowColor;
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(-bowSize, -bowSize/2);
-        ctx.lineTo(-bowSize*1.5, 0);
-        ctx.lineTo(-bowSize, bowSize/2);
-        ctx.closePath();
-        ctx.fill();
+        ctx.fillStyle = '#4B19D5';
+        ctx.fillRect(-bowSize, -bowSize/2, bowSize*1.5, bowSize);
         
         ctx.restore();
       }
     });
 
-    // Draw kite body with shadow
+    // Draw kite body
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate((rotation + 45) * Math.PI / 180);
-    
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
-    ctx.shadowBlur = 15;
-    ctx.shadowOffsetX = 5;
-    ctx.shadowOffsetY = 5;
 
     // Main kite body
-    const gradient = ctx.createLinearGradient(-30, -20, 30, 20);
-    gradient.addColorStop(0, '#30f2a2');
-    gradient.addColorStop(1, '#14cc80');
-    ctx.fillStyle = gradient;
+    ctx.fillStyle = '#30f2a2';
     ctx.beginPath();
     ctx.moveTo(30, -20);
     ctx.lineTo(-5, -15);
@@ -132,11 +103,8 @@ const FlappyKite = () => {
     ctx.closePath();
     ctx.fill();
 
-    // Remove shadow for details
-    ctx.shadowColor = 'transparent';
-
     // Kite details
-    ctx.strokeStyle = '#ffffff';
+    ctx.strokeStyle = '#14cc80';
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(30, -20);
@@ -145,86 +113,50 @@ const FlappyKite = () => {
     ctx.lineTo(5, 15);
     ctx.stroke();
 
-    // Kite bow tie
-    ctx.fillStyle = '#FF69B4';
-    ctx.beginPath();
-    ctx.arc(0, 0, 4, 0, Math.PI * 2);
-    ctx.fill();
+    // Kite bow tie (changed to green)
+    ctx.fillStyle = '#14cc80';  // Changed from '#FF69B4' to a green color
+    ctx.fillRect(-4, -4, 8, 8);
 
     ctx.restore();
   }, []);
 
   const drawBackground = useCallback((ctx) => {
-    // Sky gradient
-    const gradient = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
-    gradient.addColorStop(0, '#87CEEB');
-    gradient.addColorStop(0.5, '#E0F6FF');
-    gradient.addColorStop(1, '#FFF0F5');
-    ctx.fillStyle = gradient;
+    // Sky (solid color)
+    ctx.fillStyle = '#87CEEB';
     ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-    // Sun
+    // Sun (pixelated circle)
     ctx.fillStyle = '#FFD700';
-    ctx.beginPath();
-    ctx.arc(CANVAS_WIDTH - 100, 100, 40, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.fillRect(CANVAS_WIDTH - 120, 80, 40, 40);
 
-    // Hills
-    const hillGradient = ctx.createLinearGradient(0, CANVAS_HEIGHT - 100, 0, CANVAS_HEIGHT);
-    hillGradient.addColorStop(0, '#14cc80');
-    hillGradient.addColorStop(1, '#0f9b61');
-    ctx.fillStyle = hillGradient;
-    ctx.beginPath();
-    ctx.moveTo(0, CANVAS_HEIGHT);
-    for (let i = 0; i <= CANVAS_WIDTH; i += 30) {
-      ctx.lineTo(i, CANVAS_HEIGHT - Math.sin(i * 0.02 + backgroundOffsetRef.current) * 40 - 20);
+    // Hills (pixelated)
+    ctx.fillStyle = '#14cc80';
+    for (let x = 0; x < CANVAS_WIDTH; x += 10) {
+      const height = Math.sin(x * 0.02 + backgroundOffsetRef.current) * 40 + 60;
+      ctx.fillRect(x, CANVAS_HEIGHT - height, 10, height);
     }
-    ctx.lineTo(CANVAS_WIDTH, CANVAS_HEIGHT);
-    ctx.fill();
 
-    // Clouds
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    // Clouds (pixelated)
+    ctx.fillStyle = '#FFFFFF';
     cloudsRef.current.forEach(cloud => {
-      ctx.beginPath();
-      ctx.arc(cloud.x, cloud.y, 25, 0, Math.PI * 2);
-      ctx.arc(cloud.x + 25, cloud.y - 10, 25, 0, Math.PI * 2);
-      ctx.arc(cloud.x + 50, cloud.y, 25, 0, Math.PI * 2);
-      ctx.fill();
+      for (let i = 0; i < 3; i++) {
+        ctx.fillRect(cloud.x + i * 20, cloud.y, 30, 20);
+      }
+      ctx.fillRect(cloud.x + 10, cloud.y - 10, 30, 10);
     });
   }, []);
 
   const drawPipes = useCallback((ctx) => {
     pipesRef.current.forEach(pipe => {
-      let pipeColor;
-      if (pipe.passed) {
-        pipeColor = '#30f2a2';
-      } else if (CANVAS_WIDTH - pipe.x > CANVAS_WIDTH * 0.1) {
-        pipeColor = '#FFA500';
-      } else {
-        pipeColor = '#808080';
-      }
+      const pipeColor = pipe.passed ? '#00BE13' : (CANVAS_WIDTH - pipe.x > CANVAS_WIDTH * 0.1 ? '#F83F23' : '#F83F23');
 
-      // Pipe shadow
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-      ctx.shadowBlur = 10;
-      ctx.shadowOffsetX = 5;
-      ctx.shadowOffsetY = 0;
-
-      // Draw main pipe body with gradient
-      const gradient = ctx.createLinearGradient(pipe.x, 0, pipe.x + PIPE_WIDTH, 0);
-      gradient.addColorStop(0, pipeColor);
-      gradient.addColorStop(1, shadeColor(pipeColor, -20));
-      ctx.fillStyle = gradient;
-      
+      // Draw main pipe body (pixelated)
+      ctx.fillStyle = pipeColor;
       ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.gapStart);
       ctx.fillRect(pipe.x, pipe.gapStart + PIPE_GAP, PIPE_WIDTH, CANVAS_HEIGHT - pipe.gapStart - PIPE_GAP);
       
-      // Remove shadow for cap
-      ctx.shadowColor = 'transparent';
-
-      // Pipe cap
-      const capColor = shadeColor(pipeColor, -30);
-      ctx.fillStyle = capColor;
+      // Pipe cap (pixelated)
+      ctx.fillStyle = shadeColor(pipeColor, -30);
       ctx.fillRect(pipe.x - 5, pipe.gapStart - 20, PIPE_WIDTH + 10, 20);
       ctx.fillRect(pipe.x - 5, pipe.gapStart + PIPE_GAP, PIPE_WIDTH + 10, 20);
     });
@@ -330,68 +262,87 @@ const FlappyKite = () => {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
     ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-    // Create a rounded rectangle for the message box
+    // Create a pixelated border for the message box
     const boxWidth = 500;
     const boxHeight = 400;
     const boxX = (CANVAS_WIDTH - boxWidth) / 2;
     const boxY = (CANVAS_HEIGHT - boxHeight) / 2;
 
-    // Box shadow
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-    ctx.shadowBlur = 20;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 10;
-
-    // Message box
-    ctx.fillStyle = '#E0F6FF';
-    roundRect(ctx, boxX, boxY, boxWidth, boxHeight, 20);
-
-    // Reset shadow
-    ctx.shadowColor = 'transparent';
-    ctx.shadowBlur = 0;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
+    // Pixelated border
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(boxX - 10, boxY - 10, boxWidth + 20, boxHeight + 20);
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(boxX - 5, boxY - 5, boxWidth + 10, boxHeight + 10);
+    ctx.fillStyle = '#0000FF';
+    ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
 
     ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
     
-    // Game title (green)
-    ctx.fillStyle = '#14cc80';
-    ctx.font = 'bold 60px Arial';
-    ctx.fillText('Build Flight', CANVAS_WIDTH / 2, boxY + 120);
+    // Game title (yellow with "shadow")
+    ctx.fillStyle = '#000000';
+    ctx.font = 'bold 62px "Press Start 2P", cursive';
+    ctx.fillText('BUILD FLIGHT', CANVAS_WIDTH / 2 + 4, boxY + 104);
+    ctx.fillStyle = '#FFFF00';
+    ctx.font = 'bold 60px "Press Start 2P", cursive';
+    ctx.fillText('BUILD FLIGHT', CANVAS_WIDTH / 2, boxY + 100);
 
-    // Other text (dark)
-    ctx.fillStyle = '#333333';
+    // Other text (white)
+    ctx.fillStyle = '#FFFFFF';
     
     if (state === 'welcome') {
-      ctx.font = '30px Arial';
-      ctx.fillText('Click or press Space to start', CANVAS_WIDTH / 2, boxY + 250);
+      ctx.font = '20px "Press Start 2P", cursive';
+      ctx.fillText('PRESS SPACE', CANVAS_WIDTH / 2, boxY + 250);
+      ctx.fillText('TO START', CANVAS_WIDTH / 2, boxY + 280);
     } else {
-      ctx.font = 'bold 36px Arial';
-      ctx.fillText(`Final Score: ${scoreRef.current}`, CANVAS_WIDTH / 2, boxY + 200);
+      ctx.font = 'bold 24px "Press Start 2P", cursive';
+      ctx.fillText(`SCORE: ${scoreRef.current}`, CANVAS_WIDTH / 2, boxY + 200);
       
-      ctx.font = '30px Arial';
-      ctx.fillText(`High Score: ${highScoreRef.current}`, CANVAS_WIDTH / 2, boxY + 250);
+      ctx.font = '20px "Press Start 2P", cursive';
+      ctx.fillText(`HI-SCORE: ${highScoreRef.current}`, CANVAS_WIDTH / 2, boxY + 250);
       
-      ctx.font = '24px Arial';
-      ctx.fillText('Click or press Space to play again', CANVAS_WIDTH / 2, boxY + 300);
+      ctx.font = '16px "Press Start 2P", cursive';
+      ctx.fillText('PRESS SPACE', CANVAS_WIDTH / 2, boxY + 320);
+      ctx.fillText('TO PLAY AGAIN', CANVAS_WIDTH / 2, boxY + 350);
     }
 
-    // Animate the kite icon with cubic-bezier
-    const time = Date.now() / 500; // Faster animation
-    const t = (Math.sin(time) + 1) / 2; // Normalize to 0-1
-    const yOffset = cubicBezier(0, 0.5, 0.5, 1, t) * 20 - 10; // Range: -10 to 10
+    // Animate the kite icon with a simple up-down motion
+    const time = Date.now() / 300;
+    const yOffset = Math.sin(time) * 10;
     
     ctx.save();
     ctx.translate(CANVAS_WIDTH / 2, boxY + 50 + yOffset);
-    ctx.rotate(30 * Math.PI / 180); // 30 degree angle
-    drawCuteKite(ctx, 0, 0, 30); // Smaller kite (size 30 instead of 50)
+    drawRetroKite(ctx, 0, 0, 30);
     ctx.restore();
   }, []);
 
-  // Add this cubic-bezier function outside of the component
-  function cubicBezier(p0, p1, p2, p3, t) {
-    const ct = 1 - t;
-    return ct * ct * ct * p0 + 3 * ct * ct * t * p1 + 3 * ct * t * t * p2 + t * t * t * p3;
+  // New function to draw a retro-style kite
+  function drawRetroKite(ctx, x, y, size) {
+    ctx.save();
+    ctx.translate(x, y);
+
+    // Kite body (pixelated diamond shape)
+    ctx.fillStyle = '#00FF00';
+    ctx.beginPath();
+    ctx.moveTo(0, -size);
+    ctx.lineTo(-size, 0);
+    ctx.lineTo(0, size);
+    ctx.lineTo(size, 0);
+    ctx.closePath();
+    ctx.fill();
+
+    // Kite details (pixelated cross)
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(-size/2, -2, size, 4);
+    ctx.fillRect(-2, -size/2, 4, size);
+
+    // Kite tail (pixelated)
+    ctx.fillStyle = '#FFFFFF';
+    for (let i = 0; i < 5; i++) {
+      ctx.fillRect(-4, size + i * 8, 8, 4);
+    }
+
+    ctx.restore();
   }
 
   const gameLoop = useCallback(() => {
@@ -457,11 +408,11 @@ const FlappyKite = () => {
     drawPipes(ctx);
     drawKite(ctx);
 
-    // Draw score
+    // Draw score (pixelated font)
     ctx.fillStyle = 'white';
-    ctx.font = 'bold 30px Arial';
+    ctx.font = '20px "Press Start 2P", cursive';
     ctx.textAlign = 'left';
-    ctx.fillText(`Score: ${scoreRef.current}`, 20, 40);
+    ctx.fillText(`SCORE: ${scoreRef.current}`, 20, 40);
 
     // Draw game state screens
     if (gameStateRef.current === 'welcome') {
@@ -498,7 +449,7 @@ const FlappyKite = () => {
     ctx.translate(x, y);
 
     // Kite body
-    ctx.fillStyle = '#30f2a2';
+    ctx.fillStyle = '#14cc80';
     ctx.beginPath();
     ctx.moveTo(0, -size);
     ctx.lineTo(-size, 0);
@@ -518,7 +469,7 @@ const FlappyKite = () => {
     ctx.stroke();
 
     // Kite tail
-    ctx.strokeStyle = '#F5F4FF';
+    ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = size / 15;
     ctx.beginPath();
     ctx.moveTo(0, size);
@@ -548,6 +499,19 @@ const FlappyKite = () => {
     };
   }, [jump]);
 
+  // Add this to your component's return statement
+  useEffect(() => {
+    // Load the "Press Start 2P" font
+    const link = document.createElement('link');
+    link.href = 'https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap';
+    link.rel = 'stylesheet';
+    document.head.appendChild(link);
+
+    return () => {
+      document.head.removeChild(link);
+    };
+  }, []);
+
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#87CEEB' }}>
       <canvas
@@ -555,7 +519,10 @@ const FlappyKite = () => {
         width={CANVAS_WIDTH}
         height={CANVAS_HEIGHT}
         onClick={jump}
-        style={{ border: '2px solid black', borderRadius: '10px' }}
+        style={{
+          border: '4px solid #000000',
+          imageRendering: 'pixelated',
+        }}
       />
     </div>
   );
