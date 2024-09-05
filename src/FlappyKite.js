@@ -56,14 +56,35 @@ const FlappyKite = () => {
     const kite = kiteRef.current;
     const pipes = pipesRef.current;
 
+    // Check if kite is out of bounds
     if (kite.y < 0 || kite.y > CANVAS_HEIGHT) {
       return true;
     }
 
+    // Define kite corners (diamond shape)
+    const kiteSize = 30;
+    const kiteCorners = [
+      { x: kiteSize, y: 0 },
+      { x: 0, y: kiteSize },
+      { x: -kiteSize, y: 0 },
+      { x: 0, y: -kiteSize }
+    ];
+
+    // Rotate kite corners
+    const rotatedCorners = kiteCorners.map(corner => {
+      const rotatedX = corner.x * Math.cos(kite.rotation * Math.PI / 180) - corner.y * Math.sin(kite.rotation * Math.PI / 180);
+      const rotatedY = corner.x * Math.sin(kite.rotation * Math.PI / 180) + corner.y * Math.cos(kite.rotation * Math.PI / 180);
+      return { x: kite.x + rotatedX, y: kite.y + rotatedY };
+    });
+
+    // Check collision with pipes
     return pipes.some(pipe => {
-      const inXRange = kite.x + 30 > pipe.x && kite.x - 40 < pipe.x + PIPE_WIDTH;
-      const inYRange = kite.y - 30 < pipe.gapStart || kite.y + 30 > pipe.gapStart + PIPE_GAP;
-      return inXRange && inYRange;
+      // Check if any corner is inside the pipe
+      return rotatedCorners.some(corner => {
+        const inXRange = corner.x > pipe.x && corner.x < pipe.x + PIPE_WIDTH;
+        const inYRange = corner.y < pipe.gapStart || corner.y > pipe.gapStart + PIPE_GAP;
+        return inXRange && inYRange;
+      });
     });
   }, []);
 
@@ -104,7 +125,7 @@ const FlappyKite = () => {
     ctx.rotate((rotation + 45) * Math.PI / 180);
 
     // Main kite body
-    ctx.fillStyle = '#30f2a2';
+    ctx.fillStyle = '#14CC80';
     ctx.beginPath();
     ctx.moveTo(30, -20);
     ctx.lineTo(-5, -15);
@@ -114,7 +135,7 @@ const FlappyKite = () => {
     ctx.fill();
 
     // Kite details
-    ctx.strokeStyle = '#14cc80';
+    ctx.strokeStyle = '#00BB64';
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(30, -20);
@@ -124,7 +145,7 @@ const FlappyKite = () => {
     ctx.stroke();
 
     // Kite bow tie (changed to green)
-    ctx.fillStyle = '#14cc80';
+    ctx.fillStyle = '#00BB64';
     ctx.fillRect(-4, -4, 8, 8);
 
     ctx.restore();
@@ -140,7 +161,7 @@ const FlappyKite = () => {
     ctx.fillRect(CANVAS_WIDTH - 120, 80, 40, 40);
 
     // Smooth hills
-    ctx.fillStyle = '#14cc80';
+    ctx.fillStyle = '#00BB64';
     ctx.beginPath();
     ctx.moveTo(0, CANVAS_HEIGHT);
     for (let x = 0; x <= CANVAS_WIDTH; x++) {
@@ -298,7 +319,7 @@ const FlappyKite = () => {
     ctx.fillStyle = '#000000';
     ctx.font = 'bold 62px "Press Start 2P", cursive';
     ctx.fillText('BUILD FLIGHT', CANVAS_WIDTH / 2 + 4, boxY + 104);
-    ctx.fillStyle = '#FFFF00';
+    ctx.fillStyle = '#4B19D5';
     ctx.font = 'bold 60px "Press Start 2P", cursive';
     ctx.fillText('BUILD FLIGHT', CANVAS_WIDTH / 2, boxY + 100);
 
