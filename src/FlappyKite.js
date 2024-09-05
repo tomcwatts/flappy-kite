@@ -11,6 +11,20 @@ const STRING_SEGMENTS = 15;
 const SEGMENT_LENGTH = 4;
 
 const FlappyKite = () => {
+  // Color variables
+  const SKY_COLOR = '#87CEEB';
+  const SUN_COLOR = '#FFD700';
+  const HILL_COLOR = '#00BB64';
+  const CLOUD_COLOR = '#FFFFFF';
+  const KITE_BODY_COLOR = '#14CC80';
+  const KITE_DETAIL_COLOR = '#00BB64';
+  const KITE_STRING_COLOR = 'rgba(255, 255, 255, 0.6)';
+  const KITE_BOW_COLOR = '#23d58c';
+  const PIPE_COLOR = '#F83F23';
+  const PIPE_PASSED_COLOR = '#00BE13';
+  const GAME_SCREEN_BLUE = '#4B19D5';
+  const GAME_SCREEN_TEXT_COLOR = '#00ff86';
+
   const canvasRef = useRef(null);
   const gameStateRef = useRef('welcome');
   const scoreRef = useRef(0);
@@ -92,7 +106,7 @@ const FlappyKite = () => {
     const { x, y, rotation } = kiteRef.current;
     
     // Draw string connecting bows/tails
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)'; // Semi-transparent white
+    ctx.strokeStyle = KITE_STRING_COLOR;
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(x, y);
@@ -102,17 +116,15 @@ const FlappyKite = () => {
     ctx.stroke();
 
     // Draw bows/tails
-    const bowColors = ['#ffffff', '#ffffff', '#ffffff', '#ffffff'];
     stringPointsRef.current.forEach((point, index) => {
       if (index % 4 === 0 && index !== 0) {
         const bowSize = 6 - (index / 4);
-        const bowColor = bowColors[index % bowColors.length];
         
         ctx.save();
         ctx.translate(x + point.x, y + point.y);
         ctx.rotate(Math.atan2(point.y - stringPointsRef.current[index-1].y, point.x - stringPointsRef.current[index-1].x));
         
-        ctx.fillStyle = '#23d58c';
+        ctx.fillStyle = KITE_BOW_COLOR;
         ctx.fillRect(-bowSize, -bowSize/2, bowSize*1.5, bowSize);
         
         ctx.restore();
@@ -125,7 +137,7 @@ const FlappyKite = () => {
     ctx.rotate((rotation + 45) * Math.PI / 180);
 
     // Main kite body
-    ctx.fillStyle = '#14CC80';
+    ctx.fillStyle = KITE_BODY_COLOR;
     ctx.beginPath();
     ctx.moveTo(30, -20);
     ctx.lineTo(-5, -15);
@@ -135,7 +147,7 @@ const FlappyKite = () => {
     ctx.fill();
 
     // Kite details
-    ctx.strokeStyle = '#00BB64';
+    ctx.strokeStyle = KITE_DETAIL_COLOR;
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(30, -20);
@@ -144,24 +156,24 @@ const FlappyKite = () => {
     ctx.lineTo(5, 15);
     ctx.stroke();
 
-    // Kite bow tie (changed to green)
-    ctx.fillStyle = '#00BB64';
+    // Kite bow tie
+    ctx.fillStyle = KITE_DETAIL_COLOR;
     ctx.fillRect(-4, -4, 8, 8);
 
     ctx.restore();
   }, []);
 
   const drawBackground = useCallback((ctx) => {
-    // Sky (solid color)
-    ctx.fillStyle = '#87CEEB';
+    // Sky
+    ctx.fillStyle = SKY_COLOR;
     ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-    // Sun (pixelated circle)
-    ctx.fillStyle = '#FFD700';
+    // Sun
+    ctx.fillStyle = SUN_COLOR;
     ctx.fillRect(CANVAS_WIDTH - 120, 80, 40, 40);
 
     // Smooth hills
-    ctx.fillStyle = '#00BB64';
+    ctx.fillStyle = HILL_COLOR;
     ctx.beginPath();
     ctx.moveTo(0, CANVAS_HEIGHT);
     for (let x = 0; x <= CANVAS_WIDTH; x++) {
@@ -172,8 +184,8 @@ const FlappyKite = () => {
     ctx.closePath();
     ctx.fill();
 
-    // Clouds (pixelated)
-    ctx.fillStyle = '#FFFFFF';
+    // Clouds
+    ctx.fillStyle = CLOUD_COLOR;
     cloudsRef.current.forEach(cloud => {
       for (let i = 0; i < 3; i++) {
         ctx.fillRect(cloud.x + i * 20, cloud.y, 30, 20);
@@ -184,14 +196,14 @@ const FlappyKite = () => {
 
   const drawPipes = useCallback((ctx) => {
     pipesRef.current.forEach(pipe => {
-      const pipeColor = pipe.passed ? '#00BE13' : (CANVAS_WIDTH - pipe.x > CANVAS_WIDTH * 0.1 ? '#F83F23' : '#F83F23');
+      const pipeColor = pipe.passed ? PIPE_PASSED_COLOR : PIPE_COLOR;
 
-      // Draw main pipe body (pixelated)
+      // Draw main pipe body
       ctx.fillStyle = pipeColor;
       ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.gapStart);
       ctx.fillRect(pipe.x, pipe.gapStart + PIPE_GAP, PIPE_WIDTH, CANVAS_HEIGHT - pipe.gapStart - PIPE_GAP);
       
-      // Pipe cap (pixelated)
+      // Pipe cap
       ctx.fillStyle = shadeColor(pipeColor, -30);
       ctx.fillRect(pipe.x - 5, pipe.gapStart - 20, PIPE_WIDTH + 10, 20);
       ctx.fillRect(pipe.x - 5, pipe.gapStart + PIPE_GAP, PIPE_WIDTH + 10, 20);
@@ -309,7 +321,7 @@ const FlappyKite = () => {
     ctx.fillRect(boxX - 10, boxY - 10, boxWidth + 20, boxHeight + 20);
     ctx.fillStyle = '#000000';
     ctx.fillRect(boxX - 5, boxY - 5, boxWidth + 10, boxHeight + 10);
-    ctx.fillStyle = '#0000FF';
+    ctx.fillStyle = GAME_SCREEN_BLUE;
     ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
 
     ctx.textAlign = 'center';
@@ -319,7 +331,7 @@ const FlappyKite = () => {
     ctx.fillStyle = '#000000';
     ctx.font = 'bold 62px "Press Start 2P", cursive';
     ctx.fillText('BUILD FLIGHT', CANVAS_WIDTH / 2 + 4, boxY + 104);
-    ctx.fillStyle = '#4B19D5';
+    ctx.fillStyle = GAME_SCREEN_TEXT_COLOR;
     ctx.font = 'bold 60px "Press Start 2P", cursive';
     ctx.fillText('BUILD FLIGHT', CANVAS_WIDTH / 2, boxY + 100);
 
@@ -358,7 +370,7 @@ const FlappyKite = () => {
     ctx.translate(x, y);
 
     // Kite body (pixelated diamond shape)
-    ctx.fillStyle = '#00FF00';
+    ctx.fillStyle = GAME_SCREEN_TEXT_COLOR;
     ctx.beginPath();
     ctx.moveTo(0, -size);
     ctx.lineTo(-size, 0);
