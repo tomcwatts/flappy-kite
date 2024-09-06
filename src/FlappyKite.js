@@ -39,14 +39,15 @@ const FlappyKite = () => {
   const prevKitePositionRef = useRef({ x: 100, y: 300 });
 
   const [, forceUpdate] = useState({});
+  const [canRestart, setCanRestart] = useState(true);
 
   const jump = useCallback(() => {
     if (gameStateRef.current === 'playing') {
       kiteRef.current.velocity = JUMP_STRENGTH;
-    } else if (gameStateRef.current === 'welcome' || gameStateRef.current === 'gameOver') {
+    } else if (gameStateRef.current === 'welcome' || (gameStateRef.current === 'gameOver' && canRestart)) {
       startGame();
     }
-  }, []);
+  }, [canRestart]);
 
   const startGame = useCallback(() => {
     gameStateRef.current = 'playing';
@@ -74,6 +75,7 @@ const FlappyKite = () => {
 
     // Check if kite is out of bounds
     if (kite.y < 0 || kite.y > CANVAS_HEIGHT) {
+      endGame();
       return true;
     }
 
@@ -94,7 +96,7 @@ const FlappyKite = () => {
     });
 
     // Check collision with pipes and update passed status
-    return pipes.some(pipe => {
+    const collisionDetected = pipes.some(pipe => {
       // Update passed status when the front of the kite aligns with the start of the pipe
       if (!pipe.passed && kite.x >= pipe.x) {
         pipe.passed = true;
@@ -108,6 +110,20 @@ const FlappyKite = () => {
         return inXRange && inYRange;
       });
     });
+
+    if (collisionDetected) {
+      endGame();
+      return true;
+    }
+
+    return false;
+  }, []);
+
+  const endGame = useCallback(() => {
+    gameStateRef.current = 'gameOver';
+    highScoreRef.current = Math.max(highScoreRef.current, scoreRef.current);
+    setCanRestart(false);
+    setTimeout(() => setCanRestart(true), 200); // 200ms delay
   }, []);
 
   const drawKite = useCallback((ctx) => {
@@ -147,32 +163,32 @@ const FlappyKite = () => {
     // Main kite body with different colored quadrants
     ctx.beginPath();
     ctx.moveTo(0, 0);
-    ctx.lineTo(30, -20);
-    ctx.lineTo(0, -15);
+    ctx.lineTo(30, -30);
+    ctx.lineTo(0, -20);
     ctx.closePath();
     ctx.fillStyle = KITE_LIGHT_GREEN;
     ctx.fill();
 
     ctx.beginPath();
     ctx.moveTo(0, 0);
-    ctx.lineTo(0, -15);
-    ctx.lineTo(-30, 20);
+    ctx.lineTo(0, -20);
+    ctx.lineTo(-30, 30);
     ctx.closePath();
     ctx.fillStyle = KITE_DARK_GREEN;
     ctx.fill();
 
     ctx.beginPath();
     ctx.moveTo(0, 0);
-    ctx.lineTo(-30, 20);
-    ctx.lineTo(0, 15);
+    ctx.lineTo(-30, 30);
+    ctx.lineTo(0, 20);
     ctx.closePath();
     ctx.fillStyle = KITE_LIGHT_GREEN;
     ctx.fill();
 
     ctx.beginPath();
     ctx.moveTo(0, 0);
-    ctx.lineTo(0, 15);
-    ctx.lineTo(30, -20);
+    ctx.lineTo(0, 20);
+    ctx.lineTo(30, -30);
     ctx.closePath();
     ctx.fillStyle = KITE_DARK_GREEN;
     ctx.fill();
@@ -181,11 +197,11 @@ const FlappyKite = () => {
     ctx.strokeStyle = KITE_DETAIL_COLOR;
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(30, -20);
-    ctx.lineTo(-30, 20);
-    ctx.lineTo(30, -20);
-    ctx.moveTo(0, -15);
-    ctx.lineTo(0, 15);
+    ctx.moveTo(30, -30);
+    ctx.lineTo(-30, 30);
+    ctx.lineTo(30, -30);
+    ctx.moveTo(0, -20);
+    ctx.lineTo(0, 20);
     ctx.stroke();
 
     // Kite center
@@ -374,8 +390,8 @@ const FlappyKite = () => {
     
     if (state === 'welcome') {
       ctx.font = '20px "Press Start 2P", cursive';
-      ctx.fillText('PRESS SPACE', CANVAS_WIDTH / 2, boxY + 250);
-      ctx.fillText('TO START', CANVAS_WIDTH / 2, boxY + 280);
+      ctx.fillText('PRESS SPACE OR', CANVAS_WIDTH / 2, boxY + 250);
+      ctx.fillText('CLICK MOUSE TO START', CANVAS_WIDTH / 2, boxY + 280);
     } else {
       ctx.font = 'bold 24px "Press Start 2P", cursive';
       ctx.fillText(`SCORE: ${scoreRef.current}`, CANVAS_WIDTH / 2, boxY + 200);
@@ -384,10 +400,12 @@ const FlappyKite = () => {
       ctx.fillText(`HI-SCORE: ${highScoreRef.current}`, CANVAS_WIDTH / 2, boxY + 250);
       
       ctx.font = '16px "Press Start 2P", cursive';
-      ctx.fillText('PRESS SPACE', CANVAS_WIDTH / 2, boxY + 320);
-      ctx.fillText('TO PLAY AGAIN', CANVAS_WIDTH / 2, boxY + 350);
+      ctx.fillText('PRESS SPACE OR', CANVAS_WIDTH / 2, boxY + 320);
+      ctx.fillText('CLICK MOUSE TO PLAY AGAIN', CANVAS_WIDTH / 2, boxY + 350);
     }
 
+    // Commented out animated retro kites
+    /*
     // Animate the kite icons with a simple up-down motion
     const time = Date.now() / 300;
     const yOffset = Math.sin(time) * 10;
@@ -403,6 +421,7 @@ const FlappyKite = () => {
     ctx.translate(boxX + boxWidth - 100, boxY + 320 + yOffset);
     drawRetroKite(ctx, 0, 0, 20);
     ctx.restore();
+    */
   }, []);
 
   // New function to draw a retro-style kite
@@ -476,10 +495,7 @@ const FlappyKite = () => {
       backgroundOffsetRef.current += 0.02;
 
       // Check for collisions
-      if (checkCollisions()) {
-        gameStateRef.current = 'gameOver';
-        highScoreRef.current = Math.max(highScoreRef.current, scoreRef.current);
-      }
+      checkCollisions();
     }
 
     // Clear canvas
@@ -574,10 +590,16 @@ const FlappyKite = () => {
       }
     };
 
+    const handleClick = () => {
+      jump();
+    };
+
     window.addEventListener('keydown', handleKeyDown);
+    canvasRef.current.addEventListener('click', handleClick);
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
+      canvasRef.current.removeEventListener('click', handleClick);
     };
   }, [jump]);
 
