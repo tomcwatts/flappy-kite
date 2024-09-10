@@ -160,52 +160,41 @@ const FlappyKite = () => {
     ctx.translate(x, y);
     ctx.rotate((rotation + 45) * Math.PI / 180);
 
-    // Main kite body with different colored quadrants
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(30, -30);
-    ctx.lineTo(0, -20);
-    ctx.closePath();
-    ctx.fillStyle = KITE_LIGHT_GREEN;
-    ctx.fill();
+    const kiteWidth = 40;
+    const kiteHeight = 50;
+    const cornerRadius = 3; // Smaller radius for subtle rounding
 
+    // Draw kite shape with slightly rounded corners
     ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(0, -20);
-    ctx.lineTo(-30, 30);
+    ctx.moveTo(0, -kiteHeight/2);
+    ctx.arcTo(kiteWidth/2, 0, 0, kiteHeight/2, cornerRadius);
+    ctx.arcTo(0, kiteHeight/2, -kiteWidth/2, 0, cornerRadius);
+    ctx.arcTo(-kiteWidth/2, 0, 0, -kiteHeight/2, cornerRadius * 2);
+    ctx.arcTo(0, -kiteHeight/2, kiteWidth/2, 0, cornerRadius);
     ctx.closePath();
-    ctx.fillStyle = KITE_DARK_GREEN;
-    ctx.fill();
 
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(-30, 30);
-    ctx.lineTo(0, 20);
-    ctx.closePath();
-    ctx.fillStyle = KITE_LIGHT_GREEN;
-    ctx.fill();
-
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(0, 20);
-    ctx.lineTo(30, -30);
-    ctx.closePath();
-    ctx.fillStyle = KITE_DARK_GREEN;
+    // Create gradient for kite body
+    const gradient = ctx.createLinearGradient(-kiteWidth/2, -kiteHeight/2, kiteWidth/2, kiteHeight/2);
+    gradient.addColorStop(0, KITE_LIGHT_GREEN);
+    gradient.addColorStop(1, KITE_DARK_GREEN);
+    ctx.fillStyle = gradient;
     ctx.fill();
 
     // Kite outline
     ctx.strokeStyle = KITE_DETAIL_COLOR;
     ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Kite cross detail
     ctx.beginPath();
-    ctx.moveTo(30, -30);
-    ctx.lineTo(-30, 30);
-    ctx.lineTo(30, -30);
-    ctx.moveTo(0, -20);
-    ctx.lineTo(0, 20);
+    ctx.moveTo(0, -kiteHeight/2);
+    ctx.lineTo(0, kiteHeight/2);
+    ctx.moveTo(-kiteWidth/2, 0);
+    ctx.lineTo(kiteWidth/2, 0);
     ctx.stroke();
 
     // Kite center
-    ctx.fillStyle = '#14e984';
+    ctx.fillStyle = KITE_BODY_COLOR;
     ctx.beginPath();
     ctx.arc(0, 0, 4, 0, Math.PI * 2);
     ctx.fill();
