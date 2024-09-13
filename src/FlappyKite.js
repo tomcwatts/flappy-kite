@@ -41,6 +41,13 @@ const FlappyKite = () => {
   const [, forceUpdate] = useState({});
   const [canRestart, setCanRestart] = useState(true);
 
+  // Modify these constants for the ribbon
+  const RIBBON_SEGMENTS = 20;
+  const RIBBON_WIDTH = 15;
+  const RIBBON_LENGTH = 120;
+  const RIBBON_STIFFNESS = 0.3;
+  const RIBBON_DAMPING = 0.8;
+
   const jump = useCallback(() => {
     if (gameStateRef.current === 'playing') {
       kiteRef.current.velocity = JUMP_STRENGTH;
@@ -48,6 +55,17 @@ const FlappyKite = () => {
       startGame();
     }
   }, [canRestart]);
+
+  const initializeRibbon = useCallback(() => {
+    return Array(RIBBON_SEGMENTS).fill().map((_, i) => ({
+      x: 0,
+      y: i * (RIBBON_LENGTH / RIBBON_SEGMENTS),
+      prevX: 0,
+      prevY: i * (RIBBON_LENGTH / RIBBON_SEGMENTS),
+      vx: 0,
+      vy: 0,
+    }));
+  }, []);
 
   const startGame = useCallback(() => {
     gameStateRef.current = 'playing';
@@ -60,14 +78,9 @@ const FlappyKite = () => {
       y: Math.random() * CANVAS_HEIGHT / 2,
       speed: Math.random() * 0.5 + 0.1
     }));
-    stringPointsRef.current = Array(STRING_SEGMENTS).fill().map((_, i) => ({ 
-      x: -i * SEGMENT_LENGTH, 
-      y: i * SEGMENT_LENGTH * 0.45,
-      oldX: -i * SEGMENT_LENGTH, 
-      oldY: i * SEGMENT_LENGTH * 0.45 
-    }));
+    stringPointsRef.current = initializeRibbon();
     forceUpdate({});
-  }, []);
+  }, [initializeRibbon]);
 
   const checkCollisions = useCallback(() => {
     const kite = kiteRef.current;
@@ -128,32 +141,48 @@ const FlappyKite = () => {
 
   const drawKite = useCallback((ctx) => {
     const { x, y, rotation } = kiteRef.current;
+    const points = stringPointsRef.current;
+
+    if (!points || points.length === 0) {
+      stringPointsRef.current = initializeRibbon();
+      return;
+    }
     
-    // Draw string connecting bows/tails
+    // Draw ribbon
     ctx.strokeStyle = KITE_STRING_COLOR;
     ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    stringPointsRef.current.forEach((point) => {
-      ctx.lineTo(x + point.x, y + point.y);
-    });
-    ctx.stroke();
+    ctx.fillStyle = KITE_BOW_COLOR;
 
-    // Draw bows/tails
-    stringPointsRef.current.forEach((point, index) => {
-      if (index % 4 === 0 && index !== 0) {
-        const bowSize = 6 - (index / 4);
-        
-        ctx.save();
-        ctx.translate(x + point.x, y + point.y);
-        ctx.rotate(Math.atan2(point.y - stringPointsRef.current[index-1].y, point.x - stringPointsRef.current[index-1].x));
-        
-        ctx.fillStyle = KITE_BOW_COLOR;
-        ctx.fillRect(-bowSize, -bowSize/2, bowSize*1.5, bowSize);
-        
-        ctx.restore();
+    ctx.beginPath();
+    points.forEach((point, index) => {
+      if (index === 0) {
+        ctx.moveTo(x + point.x, y + point.y);
+      } else {
+        const prevPoint = points[index - 1];
+        const midX = (prevPoint.x + point.x) / 2;
+        const midY = (prevPoint.y + point.y) / 2;
+        ctx.quadraticCurveTo(x + prevPoint.x, y + prevPoint.y, x + midX, y + midY);
       }
     });
+
+    const lastPoint = points[RIBBON_SEGMENTS - 1];
+    ctx.lineTo(x + lastPoint.x - RIBBON_WIDTH / 2, y + lastPoint.y);
+    
+    for (let i = RIBBON_SEGMENTS - 1; i >= 0; i--) {
+      const point = points[i];
+      if (i === RIBBON_SEGMENTS - 1) {
+        ctx.lineTo(x + point.x - RIBBON_WIDTH / 2, y + point.y);
+      } else {
+        const nextPoint = points[i + 1];
+        const midX = (nextPoint.x + point.x) / 2;
+        const midY = (nextPoint.y + point.y) / 2;
+        ctx.quadraticCurveTo(x + point.x - RIBBON_WIDTH / 2, y + point.y, x + midX - RIBBON_WIDTH / 2, y + midY);
+      }
+    }
+
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
 
     // Draw kite body
     ctx.save();
@@ -200,7 +229,7 @@ const FlappyKite = () => {
     ctx.fill();
 
     ctx.restore();
-  }, []);
+  }, [initializeRibbon]);
 
   const drawBackground = useCallback((ctx) => {
     // Sky
@@ -261,58 +290,49 @@ const FlappyKite = () => {
 
   const updateStringPhysics = useCallback(() => {
     const points = stringPointsRef.current;
-    const time = Date.now() * 0.001;
-    const windEffect = Math.sin(time * 0.5) * 3 + Math.cos(time * 0.7) * 2;
-    const kiteVelocity = kiteRef.current.velocity;
-    const kiteMovement = kiteRef.current.x - prevKitePositionRef.current.x;
+    const kite = kiteRef.current;
+    const prevKite = prevKitePositionRef.current;
 
-    // Apply forces
-    for (let i = 0; i < points.length; i++) {
-      const point = points[i];
-      const vx = (point.x - point.oldX) * 0.98;
-      const vy = (point.y - point.oldY) * 0.98;
-
-      point.oldX = point.x;
-      point.oldY = point.y;
-
-      // Adjust position based on kite movement
-      point.x += kiteMovement;
-      point.y += kiteVelocity * 0.03;
-
-      point.x += vx;
-      point.y += vy + 0.25;
-
-      // Backward force
-      const backwardForce = 0.9 + (Math.abs(kiteVelocity) * 0.04);
-      point.x -= backwardForce * (i / points.length);
-
-      // Slightly increase downward angle
-      point.y += i * 0.025;
-
-      // Dynamic wave effect
-      const waveAmplitude = 0.25 * (i / points.length);
-      const waveFrequencyX = 0.8;
-      const waveFrequencyY = 0.6;
-      const phaseShift = i * 0.2;
-      point.x += Math.sin(time * waveFrequencyX + phaseShift) * waveAmplitude;
-      point.y += Math.cos(time * waveFrequencyY + phaseShift) * waveAmplitude * 0.4;
-
-      // Add some noise for more natural movement
-      point.x += (Math.random() - 0.5) * 0.1;
-      point.y += (Math.random() - 0.5) * 0.1;
-
-      // Wind effect
-      point.x += windEffect * (i / points.length) * 0.02;
-      point.y += windEffect * (i / points.length) * 0.015;
-
-      // Limit upward movement
-      point.y = Math.max(point.y, -i * 0.5);
-
-      // Limit forward movement
-      point.x = Math.min(point.x, 0);
+    if (!points || points.length === 0) {
+      stringPointsRef.current = initializeRibbon();
+      return;
     }
 
-    // Constrain string length
+    const kiteVelocityX = kite.x - prevKite.x;
+    const kiteVelocityY = kite.y - prevKite.y;
+    const time = Date.now() * 0.001;
+    const windEffect = Math.sin(time * 0.5) * 2 + Math.cos(time * 0.7) * 1.5;
+
+    // Update ribbon physics
+    for (let i = 0; i < points.length; i++) {
+      const point = points[i];
+      const t = i / (points.length - 1); // Normalized position along the ribbon
+
+      // Calculate forces
+      const kiteForceX = -kiteVelocityX * (1 - t) * 2;
+      const kiteForceY = -kiteVelocityY * (1 - t) * 2;
+      const windForceX = windEffect * t * 0.5;
+      const windForceY = Math.cos(time * 2 + i * 0.2) * t * 0.5;
+      const gravityForce = 0.2 * t;
+
+      // Update velocity
+      point.vx += (kiteForceX + windForceX) * RIBBON_STIFFNESS;
+      point.vy += (kiteForceY + windForceY + gravityForce) * RIBBON_STIFFNESS;
+
+      // Apply damping
+      point.vx *= RIBBON_DAMPING;
+      point.vy *= RIBBON_DAMPING;
+
+      // Update position
+      point.x += point.vx;
+      point.y += point.vy;
+
+      // Constrain points to stay behind the kite
+      point.x = Math.min(point.x, 10);
+      point.y = Math.max(point.y, -10);
+    }
+
+    // Constrain ribbon length
     for (let i = 0; i < 5; i++) {
       constrainPoints();
     }
@@ -320,20 +340,26 @@ const FlappyKite = () => {
     // Keep first point attached to kite
     points[0].x = 0;
     points[0].y = 0;
-  }, []);
+    points[0].vx = 0;
+    points[0].vy = 0;
+
+    // Update previous kite position
+    prevKitePositionRef.current = { x: kite.x, y: kite.y };
+  }, [initializeRibbon]);
 
   const constrainPoints = useCallback(() => {
     const points = stringPointsRef.current;
+    const segmentLength = RIBBON_LENGTH / RIBBON_SEGMENTS;
     for (let i = 0; i < points.length - 1; i++) {
       const p1 = points[i];
       const p2 = points[i + 1];
       const dx = p2.x - p1.x;
       const dy = p2.y - p1.y;
       const distance = Math.sqrt(dx * dx + dy * dy);
-      const difference = SEGMENT_LENGTH - distance;
+      const difference = segmentLength - distance;
       const percent = difference / distance / 2;
-      const offsetX = dx * percent * 0.5;
-      const offsetY = dy * percent * 0.5;
+      const offsetX = dx * percent;
+      const offsetY = dy * percent;
 
       if (i > 0) {
         p1.x -= offsetX;
@@ -604,6 +630,11 @@ const FlappyKite = () => {
       document.head.removeChild(link);
     };
   }, []);
+
+  useEffect(() => {
+    stringPointsRef.current = initializeRibbon();
+    startGame();
+  }, [initializeRibbon, startGame]);
 
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#87CEEB' }}>
