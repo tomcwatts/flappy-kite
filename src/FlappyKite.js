@@ -18,10 +18,10 @@ const FlappyKite = () => {
   const CLOUD_COLOR = '#FFFFFF';
   const KITE_LIGHT_GREEN = '#4B19D5';
   const KITE_DARK_GREEN = '#4B19D5';
-  const KITE_BODY_COLOR = '#FF4B4B';  // Bright red
-  const KITE_DETAIL_COLOR = '#FFFFFF';  // White
-  const KITE_BOW_COLOR = '#FFD700';  // Gold
-  const KITE_STRING_COLOR = 'rgba(255, 255, 255, 0.6)';  // Semi-transparent white
+  const KITE_BODY_COLOR = '#4B19D5';
+  const KITE_DETAIL_COLOR = '#14CC80';
+  const KITE_STRING_COLOR = 'rgb(75 25 213 / 70%)';
+  const KITE_BOW_COLOR = '#14CC80';
   const PIPE_COLOR = '#F83F23';
   const PIPE_PASSED_COLOR = '#00BE13';
   const GAME_SCREEN_BLUE = '#4B19D5';
@@ -139,7 +139,7 @@ const FlappyKite = () => {
     forceUpdate({});
   }, [initializeRibbon]);
 
-  const pixelSize = 6; // Adjust this for desired blockiness
+  const pixelSize = 5; // Adjust this for desired blockiness
 
   const drawPixelatedRect = useCallback((ctx, x, y, width, height, color) => {
     ctx.fillStyle = color;
@@ -258,13 +258,19 @@ const FlappyKite = () => {
     // Sun
     drawPixelatedRect(ctx, CANVAS_WIDTH - 120, 80, 40, 40, SUN_COLOR);
 
-    // Pixelated hills (draw less frequently)
-    if (frameCount % 3 === 0) {
-      for (let x = 0; x < CANVAS_WIDTH; x += pixelSize * 2) {
-        const height = Math.sin(x * 0.02 + backgroundOffsetRef.current) * 40 + 60;
-        drawPixelatedRect(ctx, x, CANVAS_HEIGHT - height, pixelSize * 2, height, HILL_COLOR);
-      }
+    // Smooth hills
+    ctx.fillStyle = HILL_COLOR;
+    ctx.beginPath();
+    ctx.moveTo(0, CANVAS_HEIGHT);
+    
+    for (let x = 0; x <= CANVAS_WIDTH; x += 5) {
+      const height = Math.sin(x * 0.02 + backgroundOffsetRef.current) * 40 + 60;
+      ctx.lineTo(x, CANVAS_HEIGHT - height);
     }
+    
+    ctx.lineTo(CANVAS_WIDTH, CANVAS_HEIGHT);
+    ctx.closePath();
+    ctx.fill();
 
     // Pixelated clouds (reduce number of clouds)
     cloudsRef.current.slice(0, 3).forEach(cloud => {
@@ -285,7 +291,7 @@ const FlappyKite = () => {
       
       // Pipe cap
       const capColor = shadeColor(pipeColor, -30);
-      drawPixelatedRect(ctx, pipe.x - 5, pipe.gapStart - 20, PIPE_WIDTH + 10, 20, capColor);
+      drawPixelatedRect(ctx, pipe.x - 5, pipe.gapStart - 10, PIPE_WIDTH + 10, 20, capColor);
       drawPixelatedRect(ctx, pipe.x - 5, pipe.gapStart + PIPE_GAP, PIPE_WIDTH + 10, 20, capColor);
     });
   }, [drawPixelatedRect]);
@@ -529,10 +535,8 @@ const FlappyKite = () => {
         }));
       }
 
-      // Update background less frequently
-      if (frameCount % 3 === 0) {
-        backgroundOffsetRef.current += 0.02;
-      }
+      // Update background continuously
+      backgroundOffsetRef.current += 0.02;
 
       // Check for collisions
       checkCollisions();
