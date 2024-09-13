@@ -18,10 +18,10 @@ const FlappyKite = () => {
   const CLOUD_COLOR = '#FFFFFF';
   const KITE_LIGHT_GREEN = '#4B19D5';
   const KITE_DARK_GREEN = '#4B19D5';
-  const KITE_BODY_COLOR = '#14CC80';
-  const KITE_DETAIL_COLOR = '#A195EF';
-  const KITE_STRING_COLOR = 'rgba(255, 255, 255, 0.6)';
-  const KITE_BOW_COLOR = '#4B19D5';
+  const KITE_BODY_COLOR = '#FF4B4B';  // Bright red
+  const KITE_DETAIL_COLOR = '#FFFFFF';  // White
+  const KITE_BOW_COLOR = '#FFD700';  // Gold
+  const KITE_STRING_COLOR = 'rgba(255, 255, 255, 0.6)';  // Semi-transparent white
   const PIPE_COLOR = '#F83F23';
   const PIPE_PASSED_COLOR = '#00BE13';
   const GAME_SCREEN_BLUE = '#4B19D5';
@@ -44,9 +44,66 @@ const FlappyKite = () => {
   // Modify these constants for the ribbon
   const RIBBON_SEGMENTS = 20;
   const RIBBON_WIDTH = 15;
-  const RIBBON_LENGTH = 120;
+  const RIBBON_LENGTH = 80;
   const RIBBON_STIFFNESS = 0.3;
   const RIBBON_DAMPING = 0.8;
+
+  const endGame = useCallback(() => {
+    gameStateRef.current = 'gameOver';
+    highScoreRef.current = Math.max(highScoreRef.current, scoreRef.current);
+    setCanRestart(false);
+    setTimeout(() => setCanRestart(true), 200); // 200ms delay
+  }, []);
+
+  const checkCollisions = useCallback(() => {
+    const kite = kiteRef.current;
+    const pipes = pipesRef.current;
+
+    // Check if kite is out of bounds
+    if (kite.y < 0 || kite.y > CANVAS_HEIGHT) {
+      endGame();
+      return true;
+    }
+
+    // Define kite corners (rotated quadrilateral)
+    const kiteSize = 30;
+    const kiteCorners = [
+      { x: kiteSize * Math.cos(Math.PI / 4), y: kiteSize * Math.sin(Math.PI / 4) },
+      { x: kiteSize * Math.cos(3 * Math.PI / 4), y: kiteSize * Math.sin(3 * Math.PI / 4) },
+      { x: kiteSize * Math.cos(5 * Math.PI / 4), y: kiteSize * Math.sin(5 * Math.PI / 4) },
+      { x: kiteSize * Math.cos(7 * Math.PI / 4), y: kiteSize * Math.sin(7 * Math.PI / 4) }
+    ];
+
+    // Rotate kite corners
+    const rotatedCorners = kiteCorners.map(corner => {
+      const rotatedX = corner.x * Math.cos(kite.rotation * Math.PI / 180) - corner.y * Math.sin(kite.rotation * Math.PI / 180);
+      const rotatedY = corner.x * Math.sin(kite.rotation * Math.PI / 180) + corner.y * Math.cos(kite.rotation * Math.PI / 180);
+      return { x: kite.x + rotatedX, y: kite.y + rotatedY };
+    });
+
+    // Check collision with pipes and update passed status
+    const collisionDetected = pipes.some(pipe => {
+      // Update passed status when the front of the kite aligns with the start of the pipe
+      if (!pipe.passed && kite.x >= pipe.x) {
+        pipe.passed = true;
+        scoreRef.current += 1;
+      }
+
+      // Check if any corner is inside the pipe
+      return rotatedCorners.some(corner => {
+        const inXRange = corner.x > pipe.x && corner.x < pipe.x + PIPE_WIDTH;
+        const inYRange = corner.y < pipe.gapStart || corner.y > pipe.gapStart + PIPE_GAP;
+        return inXRange && inYRange;
+      });
+    });
+
+    if (collisionDetected) {
+      endGame();
+      return true;
+    }
+
+    return false;
+  }, [endGame]);
 
   const jump = useCallback(() => {
     if (gameStateRef.current === 'playing') {
@@ -82,62 +139,21 @@ const FlappyKite = () => {
     forceUpdate({});
   }, [initializeRibbon]);
 
-  const checkCollisions = useCallback(() => {
-    const kite = kiteRef.current;
-    const pipes = pipesRef.current;
+  const pixelSize = 6; // Adjust this for desired blockiness
 
-    // Check if kite is out of bounds
-    if (kite.y < 0 || kite.y > CANVAS_HEIGHT) {
-      endGame();
-      return true;
-    }
-
-    // Define kite corners (diamond shape)
-    const kiteSize = 30;
-    const kiteCorners = [
-      { x: kiteSize, y: 0 },
-      { x: 0, y: kiteSize },
-      { x: -kiteSize, y: 0 },
-      { x: 0, y: -kiteSize }
-    ];
-
-    // Rotate kite corners
-    const rotatedCorners = kiteCorners.map(corner => {
-      const rotatedX = corner.x * Math.cos(kite.rotation * Math.PI / 180) - corner.y * Math.sin(kite.rotation * Math.PI / 180);
-      const rotatedY = corner.x * Math.sin(kite.rotation * Math.PI / 180) + corner.y * Math.cos(kite.rotation * Math.PI / 180);
-      return { x: kite.x + rotatedX, y: kite.y + rotatedY };
-    });
-
-    // Check collision with pipes and update passed status
-    const collisionDetected = pipes.some(pipe => {
-      // Update passed status when the front of the kite aligns with the start of the pipe
-      if (!pipe.passed && kite.x >= pipe.x) {
-        pipe.passed = true;
-        scoreRef.current += 1;
+  const drawPixelatedRect = (ctx, x, y, width, height, color) => {
+    ctx.fillStyle = color;
+    for (let px = 0; px < width; px += pixelSize) {
+      for (let py = 0; py < height; py += pixelSize) {
+        ctx.fillRect(
+          Math.floor(x / pixelSize) * pixelSize + px,
+          Math.floor(y / pixelSize) * pixelSize + py,
+          pixelSize,
+          pixelSize
+        );
       }
-
-      // Check if any corner is inside the pipe
-      return rotatedCorners.some(corner => {
-        const inXRange = corner.x > pipe.x && corner.x < pipe.x + PIPE_WIDTH;
-        const inYRange = corner.y < pipe.gapStart || corner.y > pipe.gapStart + PIPE_GAP;
-        return inXRange && inYRange;
-      });
-    });
-
-    if (collisionDetected) {
-      endGame();
-      return true;
     }
-
-    return false;
-  }, []);
-
-  const endGame = useCallback(() => {
-    gameStateRef.current = 'gameOver';
-    highScoreRef.current = Math.max(highScoreRef.current, scoreRef.current);
-    setCanRestart(false);
-    setTimeout(() => setCanRestart(true), 200); // 200ms delay
-  }, []);
+  };
 
   const drawKite = useCallback((ctx) => {
     const { x, y, rotation } = kiteRef.current;
@@ -148,117 +164,115 @@ const FlappyKite = () => {
       return;
     }
     
-    // Draw ribbon
-    ctx.strokeStyle = KITE_STRING_COLOR;
-    ctx.lineWidth = 2;
-    ctx.fillStyle = KITE_BOW_COLOR;
-
-    ctx.beginPath();
-    points.forEach((point, index) => {
-      if (index === 0) {
-        ctx.moveTo(x + point.x, y + point.y);
-      } else {
-        const prevPoint = points[index - 1];
-        const midX = (prevPoint.x + point.x) / 2;
-        const midY = (prevPoint.y + point.y) / 2;
-        ctx.quadraticCurveTo(x + prevPoint.x, y + prevPoint.y, x + midX, y + midY);
-      }
-    });
-
-    const lastPoint = points[RIBBON_SEGMENTS - 1];
-    ctx.lineTo(x + lastPoint.x - RIBBON_WIDTH / 2, y + lastPoint.y);
-    
-    for (let i = RIBBON_SEGMENTS - 1; i >= 0; i--) {
-      const point = points[i];
-      if (i === RIBBON_SEGMENTS - 1) {
-        ctx.lineTo(x + point.x - RIBBON_WIDTH / 2, y + point.y);
-      } else {
-        const nextPoint = points[i + 1];
-        const midX = (nextPoint.x + point.x) / 2;
-        const midY = (nextPoint.y + point.y) / 2;
-        ctx.quadraticCurveTo(x + point.x - RIBBON_WIDTH / 2, y + point.y, x + midX - RIBBON_WIDTH / 2, y + midY);
-      }
-    }
-
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-
-    // Draw kite body
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate((rotation + 45) * Math.PI / 180);
 
-    const kiteWidth = 40;
-    const kiteHeight = 50;
-    const cornerRadius = 3; // Smaller radius for subtle rounding
+    const kiteWidth = 48;
+    const kiteHeight = 56;
 
-    // Draw kite shape with slightly rounded corners
-    ctx.beginPath();
-    ctx.moveTo(0, -kiteHeight/2);
-    ctx.arcTo(kiteWidth/2, 0, 0, kiteHeight/2, cornerRadius);
-    ctx.arcTo(0, kiteHeight/2, -kiteWidth/2, 0, cornerRadius);
-    ctx.arcTo(-kiteWidth/2, 0, 0, -kiteHeight/2, cornerRadius * 2);
-    ctx.arcTo(0, -kiteHeight/2, kiteWidth/2, 0, cornerRadius);
-    ctx.closePath();
+    // Draw main kite shape (quadrilateral with concave sides)
+    const drawConcaveQuad = (ctx, width, height, color) => {
+      const controlPointOffset = -0.6; // Keep this value as it's perfect
 
-    // Create gradient for kite body
-    const gradient = ctx.createLinearGradient(-kiteWidth/2, -kiteHeight/2, kiteWidth/2, kiteHeight/2);
-    gradient.addColorStop(0, KITE_LIGHT_GREEN);
-    gradient.addColorStop(1, KITE_DARK_GREEN);
-    ctx.fillStyle = gradient;
-    ctx.fill();
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(0, -height / 2);
+      
+      // Top right edge (concave)
+      ctx.quadraticCurveTo(
+        width / 2 * (1 + controlPointOffset), -height / 2 * (1 + controlPointOffset),
+        width / 2, 0
+      );
+      
+      // Bottom right edge (concave)
+      ctx.quadraticCurveTo(
+        width / 2 * (1 + controlPointOffset), height / 2 * (1 + controlPointOffset),
+        0, height / 2
+      );
+      
+      // Bottom left edge (concave)
+      ctx.quadraticCurveTo(
+        -width / 2 * (1 + controlPointOffset), height / 2 * (1 + controlPointOffset),
+        -width / 2, 0
+      );
+      
+      // Top left edge (concave)
+      ctx.quadraticCurveTo(
+        -width / 2 * (1 + controlPointOffset), -height / 2 * (1 + controlPointOffset),
+        0, -height / 2
+      );
 
-    // Kite outline
+      ctx.closePath();
+      ctx.fill();
+    };
+
+    // Main kite body
+    drawConcaveQuad(ctx, kiteWidth, kiteHeight, KITE_BODY_COLOR);
+
+    // Kite details
     ctx.strokeStyle = KITE_DETAIL_COLOR;
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, -kiteHeight / 2);
+    ctx.lineTo(0, kiteHeight / 2);
+    ctx.moveTo(-kiteWidth / 2, 0);
+    ctx.lineTo(kiteWidth / 2, 0);
     ctx.stroke();
 
-    // Kite cross detail
+    // Kite bow
+    const bowSize = 8;
+    ctx.fillStyle = KITE_BOW_COLOR;
     ctx.beginPath();
-    ctx.moveTo(0, -kiteHeight/2);
-    ctx.lineTo(0, kiteHeight/2);
-    ctx.moveTo(-kiteWidth/2, 0);
-    ctx.lineTo(kiteWidth/2, 0);
-    ctx.stroke();
-
-    // Kite center
-    ctx.fillStyle = KITE_BODY_COLOR;
-    ctx.beginPath();
-    ctx.arc(0, 0, 4, 0, Math.PI * 2);
+    ctx.arc(0, 0, bowSize / 2, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.restore();
+
+    // Calculate the ribbon anchor point (bottom right corner)
+    const cornerAngle = Math.PI / 4; // 45 degrees in radians
+    const ribbonAnchorX = x + Math.cos((rotation + 5 + 135) * Math.PI / 180) * (kiteWidth / 2 / Math.cos(cornerAngle));
+    const ribbonAnchorY = y + Math.sin((rotation + 5 + 135) * Math.PI / 180) * (kiteWidth / 2 / Math.cos(cornerAngle));
+
+    // Draw pixelated ribbon
+    for (let i = 0; i < points.length - 1; i++) {
+      const point = points[i];
+      const nextPoint = points[i + 1];
+      
+      const dx = nextPoint.x - point.x;
+      const dy = nextPoint.y - point.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      const steps = Math.ceil(distance / pixelSize);
+      
+      for (let j = 0; j < steps; j++) {
+        const t = j / steps;
+        const px = point.x + dx * t;
+        const py = point.y + dy * t;
+        
+        drawPixelatedRect(ctx, ribbonAnchorX + px, ribbonAnchorY + py, pixelSize, pixelSize, KITE_STRING_COLOR);
+      }
+    }
   }, [initializeRibbon]);
 
   const drawBackground = useCallback((ctx) => {
     // Sky
-    ctx.fillStyle = SKY_COLOR;
-    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    drawPixelatedRect(ctx, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT, SKY_COLOR);
 
     // Sun
-    ctx.fillStyle = SUN_COLOR;
-    ctx.fillRect(CANVAS_WIDTH - 120, 80, 40, 40);
+    drawPixelatedRect(ctx, CANVAS_WIDTH - 120, 80, 40, 40, SUN_COLOR);
 
-    // Smooth hills
-    ctx.fillStyle = HILL_COLOR;
-    ctx.beginPath();
-    ctx.moveTo(0, CANVAS_HEIGHT);
-    for (let x = 0; x <= CANVAS_WIDTH; x++) {
+    // Pixelated hills
+    for (let x = 0; x < CANVAS_WIDTH; x += pixelSize) {
       const height = Math.sin(x * 0.02 + backgroundOffsetRef.current) * 40 + 60;
-      ctx.lineTo(x, CANVAS_HEIGHT - height);
+      drawPixelatedRect(ctx, x, CANVAS_HEIGHT - height, pixelSize, height, HILL_COLOR);
     }
-    ctx.lineTo(CANVAS_WIDTH, CANVAS_HEIGHT);
-    ctx.closePath();
-    ctx.fill();
 
-    // Clouds
-    ctx.fillStyle = CLOUD_COLOR;
+    // Pixelated clouds
     cloudsRef.current.forEach(cloud => {
       for (let i = 0; i < 3; i++) {
-        ctx.fillRect(cloud.x + i * 20, cloud.y, 30, 20);
+        drawPixelatedRect(ctx, cloud.x + i * 20, cloud.y, 30, 20, CLOUD_COLOR);
       }
-      ctx.fillRect(cloud.x + 10, cloud.y - 10, 30, 10);
+      drawPixelatedRect(ctx, cloud.x + 10, cloud.y - 10, 30, 10, CLOUD_COLOR);
     });
   }, []);
 
@@ -267,14 +281,13 @@ const FlappyKite = () => {
       const pipeColor = pipe.passed ? PIPE_PASSED_COLOR : PIPE_COLOR;
 
       // Draw main pipe body
-      ctx.fillStyle = pipeColor;
-      ctx.fillRect(pipe.x, 0, PIPE_WIDTH, pipe.gapStart);
-      ctx.fillRect(pipe.x, pipe.gapStart + PIPE_GAP, PIPE_WIDTH, CANVAS_HEIGHT - pipe.gapStart - PIPE_GAP);
+      drawPixelatedRect(ctx, pipe.x, 0, PIPE_WIDTH, pipe.gapStart, pipeColor);
+      drawPixelatedRect(ctx, pipe.x, pipe.gapStart + PIPE_GAP, PIPE_WIDTH, CANVAS_HEIGHT - pipe.gapStart - PIPE_GAP, pipeColor);
       
       // Pipe cap
-      ctx.fillStyle = shadeColor(pipeColor, -30);
-      ctx.fillRect(pipe.x - 5, pipe.gapStart - 20, PIPE_WIDTH + 10, 20);
-      ctx.fillRect(pipe.x - 5, pipe.gapStart + PIPE_GAP, PIPE_WIDTH + 10, 20);
+      const capColor = shadeColor(pipeColor, -30);
+      drawPixelatedRect(ctx, pipe.x - 5, pipe.gapStart - 20, PIPE_WIDTH + 10, 20, capColor);
+      drawPixelatedRect(ctx, pipe.x - 5, pipe.gapStart + PIPE_GAP, PIPE_WIDTH + 10, 20, capColor);
     });
   }, []);
 
