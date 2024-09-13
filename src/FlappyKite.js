@@ -20,8 +20,8 @@ const FlappyKite = () => {
   const KITE_DARK_GREEN = '#4B19D5';
   const KITE_BODY_COLOR = '#4B19D5';
   const KITE_DETAIL_COLOR = '#14CC80';
-  const KITE_STRING_COLOR = 'rgb(75 25 213 / 70%)';
-  const KITE_BOW_COLOR = '#14CC80';
+  const KITE_STRING_COLOR = 'rgb(75 25 213 / 80%)';
+  const KITE_BOW_COLOR = '#0cad6a';
   const PIPE_COLOR = '#F83F23';
   const PIPE_PASSED_COLOR = '#00BE13';
   const GAME_SCREEN_BLUE = '#4B19D5';
@@ -139,7 +139,7 @@ const FlappyKite = () => {
     forceUpdate({});
   }, [initializeRibbon]);
 
-  const pixelSize = 5; // Adjust this for desired blockiness
+  const pixelSize = 4.5; // Adjust this for desired blockiness
 
   const drawPixelatedRect = useCallback((ctx, x, y, width, height, color) => {
     ctx.fillStyle = color;
@@ -208,7 +208,7 @@ const FlappyKite = () => {
 
     // Kite details
     ctx.strokeStyle = KITE_DETAIL_COLOR;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(0, -kiteHeight / 2);
     ctx.lineTo(0, kiteHeight / 2);
@@ -217,7 +217,7 @@ const FlappyKite = () => {
     ctx.stroke();
 
     // Kite bow
-    const bowSize = 8;
+    const bowSize = 6;
     ctx.fillStyle = KITE_BOW_COLOR;
     ctx.beginPath();
     ctx.arc(0, 0, bowSize / 2, 0, Math.PI * 2);
