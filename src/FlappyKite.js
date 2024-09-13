@@ -309,7 +309,7 @@ const FlappyKite = () => {
       const t = i / (points.length - 1); // Normalized position along the ribbon
 
       // Calculate forces
-      const kiteForceX = -kiteVelocityX * (1 - t) * 2;
+      const kiteForceX = -kiteVelocityX * (1 - t) * 3; // Increased trailing effect
       const kiteForceY = -kiteVelocityY * (1 - t) * 2;
       const windForceX = windEffect * t * 0.5;
       const windForceY = Math.cos(time * 2 + i * 0.2) * t * 0.5;
@@ -327,9 +327,13 @@ const FlappyKite = () => {
       point.x += point.vx;
       point.y += point.vy;
 
-      // Constrain points to stay behind the kite
-      point.x = Math.min(point.x, 10);
-      point.y = Math.max(point.y, -10);
+      // Ensure the ribbon always trails behind the kite
+      const minX = -i * (RIBBON_LENGTH / RIBBON_SEGMENTS) * 0.8; // Adjust this factor to control how far back the ribbon trails
+      point.x = Math.max(point.x, minX);
+
+      // Limit vertical movement
+      const maxY = i * (RIBBON_LENGTH / RIBBON_SEGMENTS) * 0.5;
+      point.y = Math.min(Math.max(point.y, -maxY), maxY);
     }
 
     // Constrain ribbon length
@@ -367,6 +371,9 @@ const FlappyKite = () => {
       }
       p2.x += offsetX;
       p2.y += offsetY;
+
+      // Ensure each segment is behind the previous one
+      p2.x = Math.min(p2.x, p1.x);
     }
   }, []);
 
