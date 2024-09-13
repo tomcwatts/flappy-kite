@@ -19,9 +19,9 @@ const FlappyKite = () => {
   const KITE_LIGHT_GREEN = '#4B19D5';
   const KITE_DARK_GREEN = '#4B19D5';
   const KITE_BODY_COLOR = '#4B19D5';
-  const KITE_DETAIL_COLOR = '#14CC80';
-  const KITE_STRING_COLOR = 'rgb(75 25 213 / 80%)';
-  const KITE_BOW_COLOR = '#0cad6a';
+  const KITE_DETAIL_COLOR = '#04e186';
+  const KITE_STRING_COLOR = 'rgb(75 25 213 / 90%)';
+  const KITE_BOW_COLOR = '#07ff85';
   const PIPE_COLOR = '#F83F23';
   const PIPE_PASSED_COLOR = '#00BE13';
   const GAME_SCREEN_BLUE = '#4B19D5';
@@ -208,7 +208,7 @@ const FlappyKite = () => {
 
     // Kite details
     ctx.strokeStyle = KITE_DETAIL_COLOR;
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(0, -kiteHeight / 2);
     ctx.lineTo(0, kiteHeight / 2);
@@ -273,13 +273,23 @@ const FlappyKite = () => {
     ctx.fill();
 
     // Pixelated clouds (reduce number of clouds)
-    cloudsRef.current.slice(0, 3).forEach(cloud => {
-      for (let i = 0; i < 3; i++) {
-        drawPixelatedRect(ctx, cloud.x + i * 20, cloud.y, 30, 20, CLOUD_COLOR);
-      }
-      drawPixelatedRect(ctx, cloud.x + 10, cloud.y - 10, 30, 10, CLOUD_COLOR);
-    });
-  }, [drawPixelatedRect]);
+  //   cloudsRef.current.slice(0, 3).forEach(cloud => {
+  //     for (let i = 0; i < 3; i++) {
+  //       drawPixelatedRect(ctx, cloud.x + i * 20, cloud.y, 30, 20, CLOUD_COLOR);
+  //     }
+  //     drawPixelatedRect(ctx, cloud.x + 10, cloud.y - 10, 30, 10, CLOUD_COLOR);
+  //   });
+  // }, [drawPixelatedRect]);
+
+      // Clouds
+      ctx.fillStyle = CLOUD_COLOR;
+      cloudsRef.current.forEach(cloud => {
+        for (let i = 0; i < 3; i++) {
+          ctx.fillRect(cloud.x + i * 20, cloud.y, 30, 20);
+        }
+        ctx.fillRect(cloud.x + 10, cloud.y - 10, 30, 10);
+      });
+    }, []);
 
   const drawPipes = useCallback((ctx) => {
     pipesRef.current.forEach(pipe => {
