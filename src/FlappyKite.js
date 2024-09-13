@@ -141,19 +141,15 @@ const FlappyKite = () => {
 
   const pixelSize = 6; // Adjust this for desired blockiness
 
-  const drawPixelatedRect = (ctx, x, y, width, height, color) => {
+  const drawPixelatedRect = useCallback((ctx, x, y, width, height, color) => {
     ctx.fillStyle = color;
-    for (let px = 0; px < width; px += pixelSize) {
-      for (let py = 0; py < height; py += pixelSize) {
-        ctx.fillRect(
-          Math.floor(x / pixelSize) * pixelSize + px,
-          Math.floor(y / pixelSize) * pixelSize + py,
-          pixelSize,
-          pixelSize
-        );
-      }
-    }
-  };
+    ctx.fillRect(
+      Math.floor(x / pixelSize) * pixelSize,
+      Math.floor(y / pixelSize) * pixelSize,
+      Math.ceil(width / pixelSize) * pixelSize,
+      Math.ceil(height / pixelSize) * pixelSize
+    );
+  }, []);
 
   const drawKite = useCallback((ctx) => {
     const { x, y, rotation } = kiteRef.current;
@@ -256,25 +252,28 @@ const FlappyKite = () => {
 
   const drawBackground = useCallback((ctx) => {
     // Sky
-    drawPixelatedRect(ctx, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT, SKY_COLOR);
+    ctx.fillStyle = SKY_COLOR;
+    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
     // Sun
     drawPixelatedRect(ctx, CANVAS_WIDTH - 120, 80, 40, 40, SUN_COLOR);
 
-    // Pixelated hills
-    for (let x = 0; x < CANVAS_WIDTH; x += pixelSize) {
-      const height = Math.sin(x * 0.02 + backgroundOffsetRef.current) * 40 + 60;
-      drawPixelatedRect(ctx, x, CANVAS_HEIGHT - height, pixelSize, height, HILL_COLOR);
+    // Pixelated hills (draw less frequently)
+    if (frameCount % 3 === 0) {
+      for (let x = 0; x < CANVAS_WIDTH; x += pixelSize * 2) {
+        const height = Math.sin(x * 0.02 + backgroundOffsetRef.current) * 40 + 60;
+        drawPixelatedRect(ctx, x, CANVAS_HEIGHT - height, pixelSize * 2, height, HILL_COLOR);
+      }
     }
 
-    // Pixelated clouds
-    cloudsRef.current.forEach(cloud => {
+    // Pixelated clouds (reduce number of clouds)
+    cloudsRef.current.slice(0, 3).forEach(cloud => {
       for (let i = 0; i < 3; i++) {
         drawPixelatedRect(ctx, cloud.x + i * 20, cloud.y, 30, 20, CLOUD_COLOR);
       }
       drawPixelatedRect(ctx, cloud.x + 10, cloud.y - 10, 30, 10, CLOUD_COLOR);
     });
-  }, []);
+  }, [drawPixelatedRect]);
 
   const drawPipes = useCallback((ctx) => {
     pipesRef.current.forEach(pipe => {
@@ -289,7 +288,7 @@ const FlappyKite = () => {
       drawPixelatedRect(ctx, pipe.x - 5, pipe.gapStart - 20, PIPE_WIDTH + 10, 20, capColor);
       drawPixelatedRect(ctx, pipe.x - 5, pipe.gapStart + PIPE_GAP, PIPE_WIDTH + 10, 20, capColor);
     });
-  }, []);
+  }, [drawPixelatedRect]);
 
   // Helper function to shade colors
   const shadeColor = (color, percent) => {
@@ -349,8 +348,8 @@ const FlappyKite = () => {
       point.y = Math.min(Math.max(point.y, -maxY), maxY);
     }
 
-    // Constrain ribbon length
-    for (let i = 0; i < 5; i++) {
+    // Reduce physics iterations
+    for (let i = 0; i < 3; i++) {
       constrainPoints();
     }
 
@@ -488,6 +487,8 @@ const FlappyKite = () => {
     ctx.restore();
   }
 
+  const [frameCount, setFrameCount] = useState(0);
+  
   const gameLoop = useCallback(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
@@ -520,20 +521,24 @@ const FlappyKite = () => {
         pipesRef.current.push({ x: CANVAS_WIDTH, gapStart, passed: false });
       }
 
-      // Update clouds
-      cloudsRef.current = cloudsRef.current.map(cloud => ({
-        ...cloud,
-        x: (cloud.x - cloud.speed + CANVAS_WIDTH) % CANVAS_WIDTH
-      }));
+      // Update clouds less frequently
+      if (frameCount % 2 === 0) {
+        cloudsRef.current = cloudsRef.current.map(cloud => ({
+          ...cloud,
+          x: (cloud.x - cloud.speed + CANVAS_WIDTH) % CANVAS_WIDTH
+        }));
+      }
 
-      // Update background
-      backgroundOffsetRef.current += 0.02;
+      // Update background less frequently
+      if (frameCount % 3 === 0) {
+        backgroundOffsetRef.current += 0.02;
+      }
 
       // Check for collisions
       checkCollisions();
     }
 
-    // Clear canvas
+    // Clear canvas (only clear the necessary areas)
     ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
     // Draw game elements
@@ -554,6 +559,7 @@ const FlappyKite = () => {
       drawGameStateScreen(ctx, 'gameOver');
     }
 
+    setFrameCount(prevCount => (prevCount + 1) % 1000);
     requestAnimationFrame(gameLoop);
   }, [checkCollisions, drawBackground, drawKite, drawPipes, drawGameStateScreen, updateStringPhysics]);
 
