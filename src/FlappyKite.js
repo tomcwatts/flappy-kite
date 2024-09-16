@@ -131,7 +131,7 @@ const FlappyKite = () => {
     prevKitePositionRef.current = { x: 100, y: 300 };
     pipesRef.current = [];
     cloudsRef.current = Array(5).fill().map(() => ({
-      x: Math.random() * CANVAS_WIDTH,
+      x: Math.random() * CANVAS_WIDTH * 1.5,  // Spread clouds across 1.5x canvas width
       y: Math.random() * CANVAS_HEIGHT / 2,
       speed: Math.random() * 0.5 + 0.1
     }));
@@ -540,10 +540,17 @@ const FlappyKite = () => {
 
       // Update clouds less frequently
       if (frameCount % 2 === 0) {
-        cloudsRef.current = cloudsRef.current.map(cloud => ({
-          ...cloud,
-          x: (cloud.x - cloud.speed + CANVAS_WIDTH) % CANVAS_WIDTH
-        }));
+        cloudsRef.current = cloudsRef.current.map(cloud => {
+          let newX = cloud.x - cloud.speed;
+          // If the cloud has moved completely off the left side, wrap it to the right
+          if (newX + 90 < 0) {  // 90 is an estimate of max cloud width
+            newX = CANVAS_WIDTH;
+          }
+          return {
+            ...cloud,
+            x: newX
+          };
+        });
       }
 
       // Update background continuously
