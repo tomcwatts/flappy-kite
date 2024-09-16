@@ -41,6 +41,8 @@ const FlappyKite = () => {
   const [, forceUpdate] = useState({});
   const [canRestart, setCanRestart] = useState(true);
 
+  const [gameState, setGameState] = useState('welcome');
+
   // Modify these constants for the ribbon
   const RIBBON_SEGMENTS = 20;
   const RIBBON_WIDTH = 15;
@@ -105,14 +107,6 @@ const FlappyKite = () => {
     return false;
   }, [endGame]);
 
-  const jump = useCallback(() => {
-    if (gameStateRef.current === 'playing') {
-      kiteRef.current.velocity = JUMP_STRENGTH;
-    } else if (gameStateRef.current === 'welcome' || (gameStateRef.current === 'gameOver' && canRestart)) {
-      startGame();
-    }
-  }, [canRestart]);
-
   const initializeRibbon = useCallback(() => {
     return Array(RIBBON_SEGMENTS).fill().map((_, i) => ({
       x: 0,
@@ -125,6 +119,7 @@ const FlappyKite = () => {
   }, []);
 
   const startGame = useCallback(() => {
+    setGameState('playing');
     gameStateRef.current = 'playing';
     scoreRef.current = 0;
     kiteRef.current = { x: 100, y: 300, velocity: 0, rotation: 0 };
@@ -138,6 +133,14 @@ const FlappyKite = () => {
     stringPointsRef.current = initializeRibbon();
     forceUpdate({});
   }, [initializeRibbon]);
+
+  const jump = useCallback(() => {
+    if (gameState === 'playing') {
+      kiteRef.current.velocity = JUMP_STRENGTH;
+    } else if (gameState === 'welcome' || (gameState === 'gameOver' && canRestart)) {
+      startGame();
+    }
+  }, [canRestart, gameState, startGame]);
 
   const pixelSize = 4.5; // Adjust this for desired blockiness
 
@@ -509,7 +512,7 @@ const FlappyKite = () => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     
-    if (gameStateRef.current === 'playing') {
+    if (gameState === 'playing') {
       const prevKiteX = kiteRef.current.x;
       const prevKiteY = kiteRef.current.y;
       
@@ -567,15 +570,15 @@ const FlappyKite = () => {
     ctx.fillText(`SCORE: ${scoreRef.current}`, 20, 40);
 
     // Draw game state screens
-    if (gameStateRef.current === 'welcome') {
+    if (gameState === 'welcome') {
       drawGameStateScreen(ctx, 'welcome');
-    } else if (gameStateRef.current === 'gameOver') {
+    } else if (gameState === 'gameOver') {
       drawGameStateScreen(ctx, 'gameOver');
     }
 
     setFrameCount(prevCount => (prevCount + 1) % 1000);
     requestAnimationFrame(gameLoop);
-  }, [checkCollisions, drawBackground, drawKite, drawPipes, drawGameStateScreen, updateStringPhysics]);
+  }, [checkCollisions, drawBackground, drawKite, drawPipes, drawGameStateScreen, updateStringPhysics, gameState]);
 
   useEffect(() => {
     const animationFrameId = requestAnimationFrame(gameLoop);
@@ -673,8 +676,8 @@ const FlappyKite = () => {
 
   useEffect(() => {
     stringPointsRef.current = initializeRibbon();
-    startGame();
-  }, [initializeRibbon, startGame]);
+    // Remove the startGame() call from here
+  }, [initializeRibbon]);
 
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#87CEEB' }}>
