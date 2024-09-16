@@ -517,10 +517,11 @@ const FlappyKite = () => {
       kiteRef.current.y += kiteRef.current.velocity;
       kiteRef.current.velocity += GRAVITY;
 
-      // Update kite rotation (increased angle deviation)
-      const targetRotation = kiteRef.current.velocity * 4;
-      kiteRef.current.rotation += (targetRotation - kiteRef.current.rotation) * 0.2;
-      kiteRef.current.rotation = Math.max(-45, Math.min(45, kiteRef.current.rotation));
+      // Update kite rotation (increased angle deviation and faster response)
+      const targetRotation = kiteRef.current.velocity * 6; // Increased multiplier
+      const rotationSpeed = kiteRef.current.velocity > 0 ? 0.3 : 0.1; // Faster rotation when falling
+      kiteRef.current.rotation += (targetRotation - kiteRef.current.rotation) * rotationSpeed;
+      kiteRef.current.rotation = Math.max(-60, Math.min(60, kiteRef.current.rotation)); // Increased max rotation
 
       // Update string physics
       updateStringPhysics();
@@ -673,8 +674,7 @@ const FlappyKite = () => {
 
   useEffect(() => {
     stringPointsRef.current = initializeRibbon();
-    startGame();
-  }, [initializeRibbon, startGame]);
+  }, [initializeRibbon]);
 
   return (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#87CEEB' }}>
