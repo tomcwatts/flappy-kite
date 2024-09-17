@@ -444,7 +444,7 @@ const FlappyKite = () => {
       ctx.fillText('CLICK MOUSE TO START', CANVAS_WIDTH / 2, boxY + 280);
     } else {
       ctx.font = 'bold 24px "Press Start 2P", cursive';
-      ctx.fillText(`SCORE: ${scoreRef.current}`, CANVAS_WIDTH / 2, boxY + 200);
+      ctx.fillText(`PIPELINES FIXED: ${scoreRef.current}`, CANVAS_WIDTH / 2, boxY + 200);
       
       ctx.font = '20px "Press Start 2P", cursive';
       ctx.fillText(`HI-SCORE: ${highScoreRef.current}`, CANVAS_WIDTH / 2, boxY + 250);
@@ -572,7 +572,7 @@ const FlappyKite = () => {
     ctx.fillStyle = 'white';
     ctx.font = '20px "Press Start 2P", cursive';
     ctx.textAlign = 'left';
-    ctx.fillText(`SCORE: ${scoreRef.current}`, 20, 40);
+    ctx.fillText(`PIPELINES FIXED: ${scoreRef.current}`, 20, 40);
 
     // Draw game state screens
     if (gameStateRef.current === 'welcome') {
