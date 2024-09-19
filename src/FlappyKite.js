@@ -684,7 +684,7 @@ const FlappyKite = () => {
   }, [initializeRibbon]);
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#87CEEB' }}>
+    // <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#87CEEB' }}>
       <canvas
         ref={canvasRef}
         width={CANVAS_WIDTH}
@@ -695,7 +695,7 @@ const FlappyKite = () => {
           imageRendering: 'pixelated',
         }}
       />
-    </div>
+    // </div>
   );
 };
 
