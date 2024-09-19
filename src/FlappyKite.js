@@ -573,18 +573,17 @@ const FlappyKite = ({ buildStatus }) => {
 
     // Draw score and build status (pixelated font)
     ctx.fillStyle = 'white';
-    ctx.font = '20px "Press Start 2P", cursive';
+    ctx.font = '16px "Press Start 2P", cursive';
     ctx.textAlign = 'left';
-    ctx.fillText(`PIPELINES FIXED: ${scoreRef.current}`, 20, 40);
+    ctx.fillText(`PIPELINES FIXED: ${scoreRef.current}`, 20, 30);
 
     // Draw build status with "Status:" in white and the status itself colored
     ctx.textAlign = 'right';
     ctx.fillStyle = 'white';
-    ctx.fillText("STATUS:", CANVAS_WIDTH - 20, 40);
+    ctx.fillText("BUILD STATUS", CANVAS_WIDTH - 20, 30);
     
-    const statusWidth = ctx.measureText(buildStatus.toUpperCase()).width;
     ctx.fillStyle = getBuildStatusColor(buildStatus);
-    ctx.fillText(buildStatus.toUpperCase(), CANVAS_WIDTH - 20, 70);
+    ctx.fillText(buildStatus.toUpperCase(), CANVAS_WIDTH - 20, 55);
 
     // Draw game state screens
     if (gameStateRef.current === 'welcome') {
