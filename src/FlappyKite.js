@@ -46,7 +46,7 @@ const FlappyKite = ({ buildStatus }) => {
   const RIBBON_WIDTH = 15;
   const RIBBON_LENGTH = 80;
   const RIBBON_STIFFNESS = 0.3;
-  const RIBBON_DAMPING = 0.8;
+  const RIBBON_DAMPING = 0.7;
 
   const buildStatusRef = useRef(buildStatus);
 
@@ -146,7 +146,7 @@ const FlappyKite = ({ buildStatus }) => {
     forceUpdate({});
   }, [initializeRibbon]);
 
-  const pixelSize = 4.5; // Adjust this for desired blockiness
+  const pixelSize = 3; // Adjust this for desired blockiness
 
   const drawPixelatedRect = useCallback((ctx, x, y, width, height, color) => {
     ctx.fillStyle = color;
