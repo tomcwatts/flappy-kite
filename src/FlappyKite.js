@@ -576,8 +576,15 @@ const FlappyKite = ({ buildStatus }) => {
     ctx.font = '20px "Press Start 2P", cursive';
     ctx.textAlign = 'left';
     ctx.fillText(`PIPELINES FIXED: ${scoreRef.current}`, 20, 40);
+
+    // Draw build status with "Status:" in white and the status itself colored
     ctx.textAlign = 'right';
-    ctx.fillText(`STATUS: ${buildStatus.toUpperCase()}`, CANVAS_WIDTH - 20, 40);
+    ctx.fillStyle = 'white';
+    ctx.fillText("STATUS:", CANVAS_WIDTH - 20, 40);
+    
+    const statusWidth = ctx.measureText(buildStatus.toUpperCase()).width;
+    ctx.fillStyle = getBuildStatusColor(buildStatus);
+    ctx.fillText(buildStatus.toUpperCase(), CANVAS_WIDTH - 20, 70);
 
     // Draw game state screens
     if (gameStateRef.current === 'welcome') {
@@ -589,6 +596,26 @@ const FlappyKite = ({ buildStatus }) => {
     setFrameCount(prevCount => (prevCount + 1) % 1000);
     requestAnimationFrame(gameLoop);
   }, [checkCollisions, drawBackground, drawKite, drawPipes, drawGameStateScreen, updateStringPhysics, buildStatus]);
+
+  const getBuildStatusColor = (status) => {
+    switch (status.toLowerCase()) {
+      case 'waiting':
+      case 'scheduled':
+        return '#FFD700'; // Gold
+      case 'running':
+        return '#FFA500'; // Orange
+      case 'failing':
+        return '#FF4500'; // Red Orange
+      case 'failed':
+        return '#FF0000'; // Red
+      case 'cancelled':
+        return '#A9A9A9'; // Dark Gray
+      case 'passed':
+        return '#32CD32'; // Lime Green
+      default:
+        return '#FFFFFF'; // White
+    }
+  };
 
   useEffect(() => {
     const animationFrameId = requestAnimationFrame(gameLoop);
