@@ -10,7 +10,7 @@ const PIPE_SPEED = 1.8;
 const STRING_SEGMENTS = 15;
 const SEGMENT_LENGTH = 4;
 
-const FlappyKite = () => {
+const FlappyKite = ({ buildStatus }) => {
   // Color variables
   const SKY_COLOR = '#7FDBFF';
   const SUN_COLOR = '#FFD700';
@@ -571,11 +571,13 @@ const FlappyKite = () => {
     drawPipes(ctx);
     drawKite(ctx);
 
-    // Draw score (pixelated font)
+    // Draw score and build status (pixelated font)
     ctx.fillStyle = 'white';
     ctx.font = '20px "Press Start 2P", cursive';
     ctx.textAlign = 'left';
     ctx.fillText(`PIPELINES FIXED: ${scoreRef.current}`, 20, 40);
+    ctx.textAlign = 'right';
+    ctx.fillText(`STATUS: ${buildStatus.toUpperCase()}`, CANVAS_WIDTH - 20, 40);
 
     // Draw game state screens
     if (gameStateRef.current === 'welcome') {
@@ -586,7 +588,7 @@ const FlappyKite = () => {
 
     setFrameCount(prevCount => (prevCount + 1) % 1000);
     requestAnimationFrame(gameLoop);
-  }, [checkCollisions, drawBackground, drawKite, drawPipes, drawGameStateScreen, updateStringPhysics]);
+  }, [checkCollisions, drawBackground, drawKite, drawPipes, drawGameStateScreen, updateStringPhysics, buildStatus]);
 
   useEffect(() => {
     const animationFrameId = requestAnimationFrame(gameLoop);

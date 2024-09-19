@@ -126,7 +126,7 @@ const BuildkiteUI = () => {
 
       {/* Modal with SimpleFlappyKite game */}
       <Modal isOpen={isModalOpen} onClose={closeModal}>
-        {isModalOpen && <FlappyKite />}
+        {isModalOpen && <FlappyKite buildStatus={buildStatus} />}
       </Modal>
     </div>
   );
