@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import FlappyKite from './FlappyKite';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 const Modal = ({ isOpen, onClose, children }) => {
   if (!isOpen) return null;
@@ -32,6 +32,22 @@ const BuildkiteUI = () => {
 
   const closeModal = useCallback(() => {
     setIsModalOpen(false);
+  }, []);
+
+  // Function to get a random build status
+  const getRandomBuildStatus = () => {
+    const statuses = ['waiting', 'scheduled', 'running', 'failing', 'failed', 'cancelled', 'passed'];
+    return statuses[Math.floor(Math.random() * statuses.length)];
+  };
+
+  // Effect to change build status randomly every 3 seconds
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setBuildStatus(getRandomBuildStatus());
+    }, 3000);
+
+    // Clean up the interval on component unmount
+    return () => clearInterval(intervalId);
   }, []);
 
   return (

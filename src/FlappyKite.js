@@ -48,6 +48,13 @@ const FlappyKite = ({ buildStatus }) => {
   const RIBBON_STIFFNESS = 0.3;
   const RIBBON_DAMPING = 0.8;
 
+  const buildStatusRef = useRef(buildStatus);
+
+  // Update buildStatusRef when buildStatus prop changes
+  useEffect(() => {
+    buildStatusRef.current = buildStatus;
+  }, [buildStatus]);
+
   const endGame = useCallback(() => {
     gameStateRef.current = 'gameOver';
     highScoreRef.current = Math.max(highScoreRef.current, scoreRef.current);
@@ -108,10 +115,10 @@ const FlappyKite = ({ buildStatus }) => {
   const jump = useCallback(() => {
     if (gameStateRef.current === 'playing') {
       kiteRef.current.velocity = JUMP_STRENGTH;
-    } else if (gameStateRef.current === 'welcome' || (gameStateRef.current === 'gameOver' && canRestart)) {
+    } else if (gameStateRef.current === 'welcome' || gameStateRef.current === 'gameOver') {
       startGame();
     }
-  }, [canRestart]);
+  }, []);
 
   const initializeRibbon = useCallback(() => {
     return Array(RIBBON_SEGMENTS).fill().map((_, i) => ({
@@ -582,8 +589,8 @@ const FlappyKite = ({ buildStatus }) => {
     ctx.fillStyle = 'white';
     ctx.fillText("BUILD STATUS", CANVAS_WIDTH - 20, 30);
     
-    ctx.fillStyle = getBuildStatusColor(buildStatus);
-    ctx.fillText(buildStatus.toUpperCase(), CANVAS_WIDTH - 20, 55);
+    ctx.fillStyle = getBuildStatusColor(buildStatusRef.current);
+    ctx.fillText(buildStatusRef.current.toUpperCase(), CANVAS_WIDTH - 20, 55);
 
     // Draw game state screens
     if (gameStateRef.current === 'welcome') {
@@ -594,7 +601,7 @@ const FlappyKite = ({ buildStatus }) => {
 
     setFrameCount(prevCount => (prevCount + 1) % 1000);
     requestAnimationFrame(gameLoop);
-  }, [checkCollisions, drawBackground, drawKite, drawPipes, drawGameStateScreen, updateStringPhysics, buildStatus]);
+  }, [checkCollisions, drawBackground, drawKite, drawPipes, drawGameStateScreen, updateStringPhysics]);
 
   const getBuildStatusColor = (status) => {
     switch (status.toLowerCase()) {
