@@ -507,7 +507,10 @@ const FlappyKite = () => {
   
   const gameLoop = useCallback(() => {
     const canvas = canvasRef.current;
+    if (!canvas) return;
+
     const ctx = canvas.getContext('2d');
+    if (!ctx) return;
     
     if (gameStateRef.current === 'playing') {
       const prevKiteX = kiteRef.current.x;
@@ -658,11 +661,11 @@ const FlappyKite = () => {
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    canvasRef.current.addEventListener('click', handleClick);
+    canvasRef.current?.addEventListener('click', handleClick);
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      canvasRef.current.removeEventListener('click', handleClick);
+      canvasRef.current?.removeEventListener('click', handleClick);
     };
   }, [jump]);
 
@@ -684,18 +687,15 @@ const FlappyKite = () => {
   }, [initializeRibbon]);
 
   return (
-    // <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#87CEEB' }}>
-      <canvas
-        ref={canvasRef}
-        width={CANVAS_WIDTH}
-        height={CANVAS_HEIGHT}
-        onClick={jump}
-        style={{
-          border: '4px solid #000000',
-          imageRendering: 'pixelated',
-        }}
-      />
-    // </div>
+    <canvas
+      ref={canvasRef}
+      width={CANVAS_WIDTH}
+      height={CANVAS_HEIGHT}
+      style={{
+        border: '4px solid #4b19d5',
+        imageRendering: 'pixelated',
+      }}
+    />
   );
 };
 
