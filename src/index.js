@@ -59,7 +59,7 @@ const BuildkiteUI = () => {
             <div className="w-6 h-6 bg-gray-300 rounded-sm mr-2"></div>
             <h1 className="text-lg font-semibold text-gray-800">Starter pipeline</h1>
           </div>
-          <div className="text-sm text-gray-500">An example pipeline for launching a rocket that shows how Buildkite works.</div>
+          {/* <div className="text-sm text-gray-500">An example pipeline for launching a rocket that shows how Buildkite works.</div> */}
           <div className="flex items-center">
             <button className="mr-2 px-4 py-2 rounded border border-gray-300 text-sm">Settings</button>
             <button className="px-4 py-2 rounded bg-green-500 text-white text-sm">New Build</button>
